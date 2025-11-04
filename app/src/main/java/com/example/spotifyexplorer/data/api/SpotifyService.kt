@@ -1,5 +1,5 @@
-import com.example.spotifyexplorer.data.api.SpotifyAuthService
-import com.example.spotifyexplorer.data.api.SpotifyApi
+package com.example.spotifyexplorer.data.api
+
 import com.example.spotifyexplorer.data.model.Artist
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.coroutines.sync.Mutex
@@ -9,8 +9,9 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import android.util.Base64
+import android.util.Log
 
-class SpotifyApiService(
+class SpotifyService(
     private val clientId: String,
     private val clientSecret: String
 ) {
@@ -65,6 +66,7 @@ class SpotifyApiService(
     suspend fun searchArtist(artistName: String): Artist? {
         val token = getValidAccessToken()
         val response = api.searchArtist("Bearer $token", artistName)
+
         if (response.isSuccessful) {
             return response.body()?.artists?.items?.firstOrNull()
         } else {
