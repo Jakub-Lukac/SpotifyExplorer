@@ -9,13 +9,11 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import android.util.Base64
-import android.util.Log
 
 class SpotifyService(
     private val clientId: String,
     private val clientSecret: String
 ) {
-
     private val authBaseUrl = "https://accounts.spotify.com/"
     private val apiBaseUrl = "https://api.spotify.com/v1/"
 

@@ -7,13 +7,18 @@ import retrofit2.http.Header
 import retrofit2.http.Query
 
 /**
- * Spotify Web API interface for data retrieval (artists, albums, tracks, etc.)
+ * Spotify API interface for data retrieval (artists, albums, tracks, etc.)
+ * It uses retrofit annotations to declare HTTP requests and their parameters
  */
 interface SpotifyApi {
-    @GET("search")
+    @GET("search") // defines path /search + HTTP method -> GET
+    // By calling this method from the SpotifyApi instance in SpotifyService.kt with baseUrl
+    // Retrofit does the work behind the scenes and constructs the final url
     suspend fun searchArtist(
-        @Header("Authorization") bearer: String,
-        @Query("q") artistName: String,
-        @Query("type") type: String = "artist"
+        @Header("Authorization") bearer: String, // Bearer token from the token endpoint
+        @Query("q") artistName: String, // The artist name to search for
+        @Query("type") type: String = "artist" // Optional: restricting search to artist results
     ): Response<ArtistResponse>
+    // Final url: https://api.spotify.com/v1/search/?q=Adele&type=artist (GET)
+    // with bearer token authorization
 }
