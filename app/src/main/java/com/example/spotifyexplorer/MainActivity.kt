@@ -78,31 +78,32 @@ class MainActivity : ComponentActivity() {
                                         value = query,
                                         onValueChange = { query = it },
                                         label = { Text("Search artist") },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    IconButton(
-                                        onClick = {
-                                            if (query.isNotBlank()) {
-                                                scope.launch {
-                                                    try {
-                                                        error = null
-                                                        artist = null
-                                                        artist = spotifyService.searchArtist(query)
-                                                        Log.d("SpotifyUI", "Loaded artist: $artist")
-                                                    } catch (e: Exception) {
-                                                        error = e.message
-                                                        Log.e("SpotifyUI", "Error fetching artist", e)
+                                        modifier = Modifier.fillMaxWidth(),
+                                        trailingIcon = {
+                                            IconButton(
+                                                onClick = {
+                                                    if (query.isNotBlank()) {
+                                                        scope.launch {
+                                                            try {
+                                                                error = null
+                                                                artist = null
+                                                                artist = spotifyService.searchArtist(query)
+                                                                Log.d("SpotifyUI", "Loaded artist: $artist")
+                                                            } catch (e: Exception) {
+                                                                error = e.message
+                                                                Log.e("SpotifyUI", "Error fetching artist", e)
+                                                            }
+                                                        }
                                                     }
                                                 }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Search,
+                                                    contentDescription = "Search"
+                                                )
                                             }
                                         }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Search,
-                                            contentDescription = "Search"
-                                        )
-                                    }
+                                    )
                                 }
 
                                 ArtistDetailsView(artist = artist, error = error)
