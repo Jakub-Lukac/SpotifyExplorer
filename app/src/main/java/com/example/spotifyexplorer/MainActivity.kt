@@ -38,7 +38,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         val spotifyService = SpotifyService(clientId, clientSecret)
 
         setContent {
@@ -54,11 +53,12 @@ class MainActivity : ComponentActivity() {
                                 title = {
                                     Text(
                                         text = "Spotify Explorer",
+                                        color = MaterialTheme.colorScheme.onPrimary,
                                         fontWeight = FontWeight.Bold
                                     )
                                 },
-                                colors = TopAppBarDefaults.largeTopAppBarColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
                                 )
                             )
                         },
@@ -75,6 +75,10 @@ class MainActivity : ComponentActivity() {
                                     value = query,
                                     onValueChange = { query = it },
                                     label = { Text("Search artist") },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        focusedLabelColor = MaterialTheme.colorScheme.primary
+                                    ),
                                     modifier = Modifier.fillMaxWidth(),
                                     trailingIcon = {
                                         IconButton(
@@ -99,19 +103,26 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             }
                                         ) {
-                                            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+                                            Icon(
+                                                imageVector = Icons.Default.Search,
+                                                contentDescription = "Search",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
                                         }
                                     }
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
-                                // Handle different UI states
                                 when (val state = uiState) {
-                                    is UiState.Idle -> Text("Search for an artist to begin")
-                                    is UiState.Loading -> {
-                                        CircularProgressIndicator(modifier = Modifier.padding(top = 32.dp))
-                                    }
+                                    is UiState.Idle -> Text(
+                                        "Search for an artist to begin",
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    is UiState.Loading -> CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(top = 32.dp)
+                                    )
                                     is UiState.Success -> {
                                         ArtistDetailsContent(state.artist)
                                         if (state.albums.isNotEmpty()) {
@@ -120,18 +131,17 @@ class MainActivity : ComponentActivity() {
                                                 text = "Albums",
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onBackground,
                                                 modifier = Modifier.align(Alignment.Start)
                                             )
                                             Spacer(modifier = Modifier.height(8.dp))
                                             AlbumList(albums = state.albums)
                                         }
                                     }
-                                    is UiState.Error -> {
-                                        Text(
-                                            text = "Error: ${state.message}",
-                                            color = MaterialTheme.colorScheme.error
-                                        )
-                                    }
+                                    is UiState.Error -> Text(
+                                        text = "Error: ${state.message}",
+                                        color = MaterialTheme.colorScheme.error
+                                    )
                                 }
                             }
                         }
