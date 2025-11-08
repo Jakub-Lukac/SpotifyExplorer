@@ -26,6 +26,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.data.api.SpotifyService
 import com.example.spotifyexplorer.data.model.Artist
 import com.example.spotifyexplorer.data.model.Album
+import com.example.spotifyexplorer.data.ui.UiState
 import com.example.spotifyexplorer.ui.theme.SpotifyExplorerTheme
 import kotlinx.coroutines.launch
 
@@ -43,9 +44,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SpotifyExplorerTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    var artist by remember { mutableStateOf<Artist?>(null) }
-                    var albums by remember { mutableStateOf<List<Album>>(emptyList()) }
-                    var error by remember { mutableStateOf<String?>(null) }
+                    var uiState by remember { mutableStateOf<UiState>(UiState.Idle) }
                     var query by remember { mutableStateOf("") }
                     val scope = rememberCoroutineScope()
 
@@ -71,7 +70,7 @@ class MainActivity : ComponentActivity() {
                                     .padding(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                // Search bar with trailing icon
+                                // Search bar
                                 OutlinedTextField(
                                     value = query,
                                     onValueChange = { query = it },
@@ -82,45 +81,57 @@ class MainActivity : ComponentActivity() {
                                             onClick = {
                                                 if (query.isNotBlank()) {
                                                     scope.launch {
+                                                        uiState = UiState.Loading
                                                         try {
-                                                            error = null
-                                                            artist = null
-                                                            albums = emptyList()
-                                                            artist = spotifyService.searchArtist(query)
-                                                            artist?.let {
-                                                                val albumResponse = spotifyService.getArtistAlbums(it.id)
-                                                                albums = albumResponse?.items ?: emptyList()
+                                                            val artist = spotifyService.searchArtist(query)
+                                                            if (artist != null) {
+                                                                val albumResponse = spotifyService.getArtistAlbums(artist.id)
+                                                                val albums = albumResponse?.items ?: emptyList()
+                                                                uiState = UiState.Success(artist, albums)
+                                                            } else {
+                                                                uiState = UiState.Error("Artist not found")
                                                             }
-                                                            Log.d("SpotifyUI", "Loaded artist: $artist")
                                                         } catch (e: Exception) {
-                                                            error = e.message
+                                                            uiState = UiState.Error(e.message ?: "Unknown error")
                                                             Log.e("SpotifyUI", "Error fetching artist", e)
                                                         }
                                                     }
                                                 }
                                             }
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Search,
-                                                contentDescription = "Search"
-                                            )
+                                            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
                                         }
                                     }
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
-                                ArtistDetailsView(artist = artist, error = error)
 
-                                if (albums.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(24.dp))
-                                    Text(
-                                        text = "Albums",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.align(Alignment.Start)
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    AlbumList(albums = albums)
+                                // Handle different UI states
+                                when (val state = uiState) {
+                                    is UiState.Idle -> Text("Search for an artist to begin")
+                                    is UiState.Loading -> {
+                                        CircularProgressIndicator(modifier = Modifier.padding(top = 32.dp))
+                                    }
+                                    is UiState.Success -> {
+                                        ArtistDetailsContent(state.artist)
+                                        if (state.albums.isNotEmpty()) {
+                                            Spacer(modifier = Modifier.height(24.dp))
+                                            Text(
+                                                text = "Albums",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.align(Alignment.Start)
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            AlbumList(albums = state.albums)
+                                        }
+                                    }
+                                    is UiState.Error -> {
+                                        Text(
+                                            text = "Error: ${state.message}",
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }
