@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -23,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.data.api.SpotifyService
 import com.example.spotifyexplorer.data.model.Artist
+import com.example.spotifyexplorer.data.model.Album
 import com.example.spotifyexplorer.ui.theme.SpotifyExplorerTheme
 import kotlinx.coroutines.launch
 
@@ -41,6 +44,7 @@ class MainActivity : ComponentActivity() {
             SpotifyExplorerTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     var artist by remember { mutableStateOf<Artist?>(null) }
+                    var albums by remember { mutableStateOf<List<Album>>(emptyList()) }
                     var error by remember { mutableStateOf<String?>(null) }
                     var query by remember { mutableStateOf("") }
                     val scope = rememberCoroutineScope()
@@ -67,46 +71,57 @@ class MainActivity : ComponentActivity() {
                                     .padding(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                // Search bar
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 16.dp)
-                                ) {
-                                    OutlinedTextField(
-                                        value = query,
-                                        onValueChange = { query = it },
-                                        label = { Text("Search artist") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        trailingIcon = {
-                                            IconButton(
-                                                onClick = {
-                                                    if (query.isNotBlank()) {
-                                                        scope.launch {
-                                                            try {
-                                                                error = null
-                                                                artist = null
-                                                                artist = spotifyService.searchArtist(query)
-                                                                Log.d("SpotifyUI", "Loaded artist: $artist")
-                                                            } catch (e: Exception) {
-                                                                error = e.message
-                                                                Log.e("SpotifyUI", "Error fetching artist", e)
+                                // Search bar with trailing icon
+                                OutlinedTextField(
+                                    value = query,
+                                    onValueChange = { query = it },
+                                    label = { Text("Search artist") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    trailingIcon = {
+                                        IconButton(
+                                            onClick = {
+                                                if (query.isNotBlank()) {
+                                                    scope.launch {
+                                                        try {
+                                                            error = null
+                                                            artist = null
+                                                            albums = emptyList()
+                                                            artist = spotifyService.searchArtist(query)
+                                                            artist?.let {
+                                                                val albumResponse = spotifyService.getArtistAlbums(it.id)
+                                                                albums = albumResponse?.items ?: emptyList()
                                                             }
+                                                            Log.d("SpotifyUI", "Loaded artist: $artist")
+                                                        } catch (e: Exception) {
+                                                            error = e.message
+                                                            Log.e("SpotifyUI", "Error fetching artist", e)
                                                         }
                                                     }
                                                 }
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Search,
-                                                    contentDescription = "Search"
-                                                )
                                             }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Search,
+                                                contentDescription = "Search"
+                                            )
                                         }
-                                    )
-                                }
+                                    }
+                                )
 
+                                Spacer(modifier = Modifier.height(16.dp))
                                 ArtistDetailsView(artist = artist, error = error)
+
+                                if (albums.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                    Text(
+                                        text = "Albums",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.align(Alignment.Start)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    AlbumList(albums = albums)
+                                }
                             }
                         }
                     )
@@ -120,7 +135,7 @@ class MainActivity : ComponentActivity() {
 fun ArtistDetailsView(artist: Artist?, error: String?) {
     Box(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(8.dp),
         contentAlignment = Alignment.TopCenter
     ) {
@@ -136,8 +151,8 @@ fun ArtistDetailsView(artist: Artist?, error: String?) {
 fun ArtistDetailsContent(artist: Artist) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val imageUrl = when {
-        screenWidth >= 768 && artist.images.isNotEmpty() -> artist.images[0].url // Large screens
-        artist.images.size > 1 -> artist.images[1].url // Smaller screens
+        screenWidth >= 768 && artist.images.isNotEmpty() -> artist.images[0].url
+        artist.images.size > 1 -> artist.images[1].url
         artist.images.isNotEmpty() -> artist.images[0].url
         else -> null
     }
@@ -182,5 +197,55 @@ fun ArtistDetailsContent(artist: Artist) {
             text = "Popularity: ${artist.popularity} / 100",
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+@Composable
+fun AlbumList(albums: List<Album>) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 400.dp)
+    ) {
+        items(albums) { album ->
+            AlbumCard(album)
+        }
+    }
+}
+
+@Composable
+fun AlbumCard(album: Album) {
+    val imageUrl = album.images.firstOrNull()?.url
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        if (imageUrl != null) {
+            Image(
+                painter = rememberAsyncImagePainter(imageUrl),
+                contentDescription = album.name,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.noimage),
+                contentDescription = "Missing album image",
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(text = album.name, fontWeight = FontWeight.Bold)
+            Text(text = "Released: ${album.release_date}", style = MaterialTheme.typography.bodySmall)
+        }
     }
 }

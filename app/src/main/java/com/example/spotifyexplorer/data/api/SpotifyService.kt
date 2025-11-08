@@ -9,6 +9,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import android.util.Base64
+import com.example.spotifyexplorer.data.model.AlbumResponse
 
 class SpotifyService(
     private val clientId: String,
@@ -71,4 +72,15 @@ class SpotifyService(
             throw Exception("Search artist failed: ${response.errorBody()?.string()}")
         }
     }
+
+    suspend fun getArtistAlbums(artistId: String): AlbumResponse? {
+        val token = getValidAccessToken()
+        val response = api.getArtistAlbums("Bearer $token", artistId)
+        if (response.isSuccessful) {
+            return response.body()
+        } else {
+            throw Exception("Failed to fetch albums: ${response.errorBody()?.string()}")
+        }
+    }
+
 }

@@ -1,9 +1,11 @@
 package com.example.spotifyexplorer.data.api
 
+import com.example.spotifyexplorer.data.model.AlbumResponse
 import com.example.spotifyexplorer.data.model.ArtistResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -20,5 +22,17 @@ interface SpotifyApi {
         @Query("type") type: String = "artist" // Optional: restricting search to artist results
     ): Response<ArtistResponse>
     // Final url: https://api.spotify.com/v1/search/?q=Adele&type=artist (GET)
+    // with bearer token authorization
+
+    /**
+     * Get albums by a specific artist ID.
+     * Example: GET https://api.spotify.com/v1/artists/{id}/albums
+     */
+    @GET("artists/{artistId}/albums")
+    suspend fun getArtistAlbums(
+        @Header("Authorization") bearer: String,
+        @Path("artistId") artistId: String,
+    ): Response<AlbumResponse>
+    // Final url: https://api.spotify.com/v1/artists/246dkjvS1zLTtiykXe5h60/albums
     // with bearer token authorization
 }
