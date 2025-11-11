@@ -5,10 +5,13 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -27,7 +30,9 @@ import com.example.spotifyexplorer.data.api.SpotifyService
 import com.example.spotifyexplorer.data.model.Artist
 import com.example.spotifyexplorer.data.model.Album
 import com.example.spotifyexplorer.data.ui.UiState
+import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyExplorerTheme
+import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -124,9 +129,9 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.padding(top = 32.dp)
                                     )
                                     is UiState.Success -> {
-                                        ArtistDetailsContent(state.artist)
+                                        ArtistDetailsCard(state.artist)
                                         if (state.albums.isNotEmpty()) {
-                                            Spacer(modifier = Modifier.height(24.dp))
+                                            Spacer(modifier = Modifier.height(12.dp))
                                             Text(
                                                 text = "Albums",
                                                 style = MaterialTheme.typography.titleMedium,
@@ -153,18 +158,20 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ArtistDetailsView(artist: Artist?, error: String?) {
+fun ArtistDetailsCard(
+    artist: Artist,
+    onArtistClick: (Artist) -> Unit = {}
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        contentAlignment = Alignment.TopCenter
+            .padding(horizontal = 16.dp, vertical = 8.dp) // margin
+            .clip(RoundedCornerShape(12.dp))
+            .background(SpotifyDarkGray)
+            .clickable { onArtistClick(artist) }
+            .padding(20.dp) // padding
     ) {
-        when {
-            error != null -> Text("Error: $error", color = MaterialTheme.colorScheme.error)
-            artist == null -> Text("Search for an artist to begin")
-            else -> ArtistDetailsContent(artist)
-        }
+        ArtistDetailsContent(artist)
     }
 }
 
@@ -207,66 +214,109 @@ fun ArtistDetailsContent(artist: Artist) {
             text = artist.name,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Followers: ${artist.followers.total}",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Text(
-            text = "Popularity: ${artist.popularity} / 100",
-            style = MaterialTheme.typography.bodyMedium
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Followers: ",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = SpotifyGreen
+            )
+            Text(
+                text = "${artist.followers.total}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Popularity: ",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = SpotifyGreen
+            )
+            Text(
+                text = "${artist.popularity} / 100",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
     }
 }
 
 @Composable
-fun AlbumList(albums: List<Album>) {
+fun AlbumList(
+    albums: List<Album>,
+    onAlbumClick: (Album) -> Unit = {}
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 400.dp)
     ) {
         items(albums) { album ->
-            AlbumCard(album)
+            AlbumCard(album = album, onAlbumClick = onAlbumClick)
         }
     }
 }
 
 @Composable
-fun AlbumCard(album: Album) {
+fun AlbumCard(
+    album: Album,
+    onAlbumClick: (Album) -> Unit = {} // default lambda for future navigation
+) {
     val imageUrl = album.images.firstOrNull()?.url
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(horizontal = 6.dp, vertical = 6.dp) // margin
+            .clip(RoundedCornerShape(12.dp))
+            .background(SpotifyDarkGray)
+            .clickable { onAlbumClick(album) } // make clickable
+            .padding(10.dp) // padding
     ) {
-        if (imageUrl != null) {
-            Image(
-                painter = rememberAsyncImagePainter(imageUrl),
-                contentDescription = album.name,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Image(
-                painter = painterResource(id = R.drawable.noimage),
-                contentDescription = "Missing album image",
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (imageUrl != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = album.name,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.noimage),
+                    contentDescription = "Missing album image",
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(text = album.name, fontWeight = FontWeight.Bold)
-            Text(text = "Released: ${album.release_date}", style = MaterialTheme.typography.bodySmall)
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = album.name,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Released: ${album.release_date}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                )
+            }
         }
     }
 }
