@@ -1,2 +1,253 @@
 package com.example.spotifyexplorer.data.ui.home
 
+import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import com.example.spotifyexplorer.R
+import com.example.spotifyexplorer.data.model.Album
+import com.example.spotifyexplorer.data.model.Artist
+import com.example.spotifyexplorer.data.ui.UiState
+import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
+import com.example.spotifyexplorer.ui.theme.SpotifyGreen
+import kotlinx.coroutines.launch
+
+@Composable
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewModel: HomeViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
+    var query by remember { mutableStateOf("") }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text("Search artist") },
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        if (query.isNotBlank()) {
+                            scope.launch {
+                                viewModel.searchArtist(query)
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (val state = uiState) {
+            is UiState.Idle -> Text("Search for an artist to begin")
+            is UiState.Loading -> CircularProgressIndicator()
+            is UiState.Success -> {
+                ArtistDetailsCard(state.artist)
+                AlbumList(albums = state.albums)
+            }
+            is UiState.Error -> Text("Error: ${state.message}")
+        }
+    }
+}
+
+
+@Composable
+fun ArtistDetailsCard(
+    artist: Artist,
+    onArtistClick: (Artist) -> Unit = {}
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp) // margin
+            .clip(RoundedCornerShape(12.dp))
+            .background(SpotifyDarkGray)
+            .clickable { onArtistClick(artist) }
+            .padding(20.dp) // padding
+    ) {
+        ArtistDetailsContent(artist)
+    }
+}
+
+@Composable
+fun ArtistDetailsContent(artist: Artist) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val imageUrl = when {
+        screenWidth >= 768 && artist.images.isNotEmpty() -> artist.images[0].url
+        artist.images.size > 1 -> artist.images[1].url
+        artist.images.isNotEmpty() -> artist.images[0].url
+        else -> null
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (imageUrl != null) {
+            Image(
+                painter = rememberAsyncImagePainter(imageUrl),
+                contentDescription = artist.name,
+                modifier = Modifier
+                    .size(180.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Image(
+                painter = painterResource(id = com.example.spotifyexplorer.R.drawable.noimage),
+                contentDescription = "Missing artist image",
+                modifier = Modifier
+                    .size(180.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = artist.name,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Followers: ",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = SpotifyGreen
+            )
+            Text(
+                text = "${artist.followers.total}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Popularity: ",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = SpotifyGreen
+            )
+            Text(
+                text = "${artist.popularity} / 100",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+    }
+}
+
+@Composable
+fun AlbumList(
+    albums: List<Album>,
+    onAlbumClick: (Album) -> Unit = {}
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 400.dp)
+    ) {
+        items(albums) { album ->
+            AlbumCard(album = album, onAlbumClick = onAlbumClick)
+        }
+    }
+}
+
+@Composable
+fun AlbumCard(
+    album: Album,
+    onAlbumClick: (Album) -> Unit = {} // default lambda for future navigation
+) {
+    val imageUrl = album.images.firstOrNull()?.url
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 6.dp, vertical = 6.dp) // margin
+            .clip(RoundedCornerShape(12.dp))
+            .background(SpotifyDarkGray)
+            .clickable { onAlbumClick(album) } // make clickable
+            .padding(10.dp) // padding
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (imageUrl != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = album.name,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.noimage),
+                    contentDescription = "Missing album image",
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = album.name,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Released: ${album.release_date}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+}
