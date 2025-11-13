@@ -10,9 +10,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +38,7 @@ import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -40,66 +46,121 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            label = { Text("Search artist") },
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                IconButton(
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Text(
+                    text = "Spotify Explorer",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(16.dp)
+                )
+                NavigationDrawerItem(
+                    label = { Text("Home") },
+                    selected = false,
                     onClick = {
-                        if (query.isNotBlank()) {
-                            scope.launch { viewModel.searchArtist(query) }
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Home, contentDescription = null) }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Favorites") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        navController.navigate("favoriteTracks")
+                    },
+                    icon = { Icon(Icons.Default.Favorite, contentDescription = null) }
+                )
+                NavigationDrawerItem(
+                    label = { Text("About") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        navController.navigate("about")
+                    },
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                )
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("Spotify Explorer") },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
                         }
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                )
             }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        when (val state = uiState) {
-            is UiState.Idle -> Text("Search for an artist to begin")
-            is UiState.Loading -> CircularProgressIndicator()
-            is UiState.Success -> {
-                if (isLandscape) {
-                    // 🖥 Landscape layout: side-by-side
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            ArtistDetailsCard(state.artist)
+        ) { innerPadding ->
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Search artist") },
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                if (query.isNotBlank()) {
+                                    scope.launch { viewModel.searchArtist(query) }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
-                        Box(modifier = Modifier.weight(1f)) {
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                when (val state = uiState) {
+                    is UiState.Idle -> Text("Search for an artist to begin")
+                    is UiState.Loading -> CircularProgressIndicator()
+                    is UiState.Success -> {
+                        if (isLandscape) {
+                            // 🖥 Landscape layout: side-by-side
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    ArtistDetailsCard(state.artist, navController)
+                                }
+                                Box(modifier = Modifier.weight(1f)) {
+                                    AlbumList(albums = state.albums)
+                                }
+                            }
+                        } else {
+                            // 📱 Portrait layout: stacked vertically
+                            ArtistDetailsCard(state.artist, navController)
+                            Spacer(modifier = Modifier.height(8.dp))
                             AlbumList(albums = state.albums)
                         }
                     }
-                } else {
-                    // 📱 Portrait layout: stacked vertically
-                    ArtistDetailsCard(state.artist)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AlbumList(albums = state.albums)
+                    is UiState.Error -> Text("Error: ${state.message}")
                 }
             }
-            is UiState.Error -> Text("Error: ${state.message}")
         }
     }
 }
@@ -109,20 +170,30 @@ fun HomeScreen(
 @Composable
 fun ArtistDetailsCard(
     artist: Artist,
-    onArtistClick: (Artist) -> Unit = {}
+    navController: NavController
 ) {
+    val currentArtistId = artist.id // capture latest ID at recomposition
+    Log.d("Current Artist ID", currentArtistId)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp) // margin
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(SpotifyDarkGray)
-            .clickable { onArtistClick(artist) }
-            .padding(20.dp) // padding
+            .clickable {
+                // Navigate to artist detail screen with artist ID
+                navController.navigate("artist_detail/$currentArtistId") {
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+            .padding(20.dp)
     ) {
         ArtistDetailsContent(artist)
     }
 }
+
 
 @Composable
 fun ArtistDetailsContent(artist: Artist) {

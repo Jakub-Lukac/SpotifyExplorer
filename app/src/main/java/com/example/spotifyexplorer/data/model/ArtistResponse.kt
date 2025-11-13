@@ -26,7 +26,8 @@ data class Artist(
     val name: String,
     val popularity: Int,
     val followers: Followers,
-    val images: List<Image>
+    val images: List<Image>,
+    val genres: List<String>
 )
 
 @Serializable
