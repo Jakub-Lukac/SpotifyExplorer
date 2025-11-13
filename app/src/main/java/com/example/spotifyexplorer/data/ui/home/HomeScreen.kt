@@ -40,8 +40,10 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     Column(
         modifier = modifier
@@ -58,9 +60,7 @@ fun HomeScreen(
                 IconButton(
                     onClick = {
                         if (query.isNotBlank()) {
-                            scope.launch {
-                                viewModel.searchArtist(query)
-                            }
+                            scope.launch { viewModel.searchArtist(query) }
                         }
                     }
                 ) {
@@ -79,13 +79,31 @@ fun HomeScreen(
             is UiState.Idle -> Text("Search for an artist to begin")
             is UiState.Loading -> CircularProgressIndicator()
             is UiState.Success -> {
-                ArtistDetailsCard(state.artist)
-                AlbumList(albums = state.albums)
+                if (isLandscape) {
+                    // 🖥 Landscape layout: side-by-side
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            ArtistDetailsCard(state.artist)
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            AlbumList(albums = state.albums)
+                        }
+                    }
+                } else {
+                    // 📱 Portrait layout: stacked vertically
+                    ArtistDetailsCard(state.artist)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AlbumList(albums = state.albums)
+                }
             }
             is UiState.Error -> Text("Error: ${state.message}")
         }
     }
 }
+
 
 
 @Composable
@@ -108,7 +126,10 @@ fun ArtistDetailsCard(
 
 @Composable
 fun ArtistDetailsContent(artist: Artist) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val screenWidth = configuration.screenWidthDp
+
     val imageUrl = when {
         screenWidth >= 768 && artist.images.isNotEmpty() -> artist.images[0].url
         artist.images.size > 1 -> artist.images[1].url
@@ -116,68 +137,154 @@ fun ArtistDetailsContent(artist: Artist) {
         else -> null
     }
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (imageUrl != null) {
-            Image(
-                painter = rememberAsyncImagePainter(imageUrl),
-                contentDescription = artist.name,
-                modifier = Modifier
-                    .size(180.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Image(
-                painter = painterResource(id = com.example.spotifyexplorer.R.drawable.noimage),
-                contentDescription = "Missing artist image",
-                modifier = Modifier
-                    .size(180.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        }
+    if (isLandscape) {
+        // Landscape: image + info side by side
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            val imageSize = 100.dp
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = artist.name,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "Followers: ",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = SpotifyGreen
-            )
-            Text(
-                text = "${artist.followers.total}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            if (imageUrl != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = artist.name,
+                    modifier = Modifier
+                        .size(imageSize)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.noimage),
+                    contentDescription = "Missing artist image",
+                    modifier = Modifier
+                        .size(imageSize)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = artist.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Followers: ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SpotifyGreen
+                    )
+                    Text(
+                        text = "${artist.followers.total}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Popularity: ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SpotifyGreen
+                    )
+                    Text(
+                        text = "${artist.popularity} / 100",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    } else {
+        // Portrait: image on top, all info stacked vertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val imageSize = 180.dp
+
+            if (imageUrl != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = artist.name,
+                    modifier = Modifier
+                        .size(imageSize)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.noimage),
+                    contentDescription = "Missing artist image",
+                    modifier = Modifier
+                        .size(imageSize)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = "Popularity: ",
-                style = MaterialTheme.typography.bodyMedium,
+                text = artist.name,
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = SpotifyGreen
+                textAlign = TextAlign.Center
             )
-            Text(
-                text = "${artist.popularity} / 100",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Followers: ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SpotifyGreen
+                )
+                Text(
+                    text = "${artist.followers.total}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Popularity: ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SpotifyGreen
+                )
+                Text(
+                    text = "${artist.popularity} / 100",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
         }
     }
 }
+
 
 @Composable
 fun AlbumList(
