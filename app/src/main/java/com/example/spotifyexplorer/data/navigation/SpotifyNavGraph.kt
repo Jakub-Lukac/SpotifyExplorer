@@ -72,11 +72,11 @@ fun SpotifyNavGraph(
         }
 
         composable(SpotifyScreens.FavoriteTracks.name) {
-            FavoriteTracksScreen(navController)
+            FavoriteTracksScreen(modifier, navController)
         }
 
         composable(SpotifyScreens.About.name) {
-            AboutScreen(navController)
+            AboutScreen(modifier, navController)
         }
     }
 }
