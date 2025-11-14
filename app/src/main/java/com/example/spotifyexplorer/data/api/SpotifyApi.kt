@@ -2,6 +2,7 @@ package com.example.spotifyexplorer.data.api
 
 import com.example.spotifyexplorer.data.model.AlbumResponse
 import com.example.spotifyexplorer.data.model.ArtistResponse
+import com.example.spotifyexplorer.data.model.TrackResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -34,5 +35,17 @@ interface SpotifyApi {
         @Path("artistId") artistId: String,
     ): Response<AlbumResponse>
     // Final url: https://api.spotify.com/v1/artists/246dkjvS1zLTtiykXe5h60/albums
+    // with bearer token authorization
+
+    /**
+     * Get tracks by a specific album ID.
+     * Example: GET https://api.spotify.com/v1/album/{id}/tracks
+     */
+    @GET("albums/{albumId}/tracks")
+    suspend fun  getAlbumTracks(
+        @Header("Authorization") bearer: String,
+        @Path("albumId") albumId: String,
+    ) : Response<TrackResponse>
+    // Final url: https://api.spotify.com/v1/albums/246dkjvS1zLTtiykXe5h60/tracks
     // with bearer token authorization
 }
