@@ -148,14 +148,26 @@ fun HomeScreen(
                                     ArtistDetailsCard(state.artist, navController)
                                 }
                                 Box(modifier = Modifier.weight(1f)) {
-                                    AlbumList(albums = state.albums)
+                                    AlbumList(
+                                        albums = state.albums,
+                                        onAlbumClick = { album ->
+                                            viewModel.selectAlbum(album)
+                                            navController.navigate("album_detail/${album.id}")
+                                        }
+                                    )
                                 }
                             }
                         } else {
-                            // 📱 Portrait layout: stacked vertically
+                            // Portrait layout: stacked vertically
                             ArtistDetailsCard(state.artist, navController)
                             Spacer(modifier = Modifier.height(8.dp))
-                            AlbumList(albums = state.albums)
+                            AlbumList(
+                                albums = state.albums,
+                                onAlbumClick = { album ->
+                                    viewModel.selectAlbum(album)
+                                    navController.navigate("album_detail/${album.id}")
+                                }
+                            )
                         }
                     }
                     is UiState.Error -> Text("Error: ${state.message}")
@@ -360,7 +372,7 @@ fun ArtistDetailsContent(artist: Artist) {
 @Composable
 fun AlbumList(
     albums: List<Album>,
-    onAlbumClick: (Album) -> Unit = {}
+    onAlbumClick: (Album) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -368,7 +380,7 @@ fun AlbumList(
             .heightIn(max = 400.dp)
     ) {
         items(albums) { album ->
-            AlbumCard(album = album, onAlbumClick = onAlbumClick)
+            AlbumCard(album = album, onAlbumClick = { onAlbumClick(album) })
         }
     }
 }

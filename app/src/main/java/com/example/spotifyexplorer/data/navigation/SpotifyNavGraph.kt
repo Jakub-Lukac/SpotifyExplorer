@@ -18,7 +18,11 @@ import com.example.spotifyexplorer.data.ui.favoriteTracks.FavoriteTracksScreen
 import com.example.spotifyexplorer.data.ui.home.HomeScreen
 import com.example.spotifyexplorer.data.ui.home.HomeViewModel
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.spotifyexplorer.data.ui.album.AlbumDetailScreen
 
 enum class SpotifyScreens() {
     Home,
@@ -70,6 +74,30 @@ fun SpotifyNavGraph(
                 }
             }
         }
+
+        composable(
+            route = "album_detail/{albumId}",
+            arguments = listOf(navArgument("albumId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            // Get the home backStack entry to access its ViewModel
+            val homeEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("home")
+            }
+            val homeViewModel: HomeViewModel = viewModel(homeEntry)
+
+            val selectedAlbum by homeViewModel.selectedAlbum.collectAsState()
+
+            if (selectedAlbum != null) {
+                AlbumDetailScreen(
+                    album = selectedAlbum!!,
+                    navController = navController
+                )
+            } else {
+                Text("Album details unavailable")
+            }
+        }
+
+
 
         composable(SpotifyScreens.FavoriteTracks.name) {
             FavoriteTracksScreen(modifier, navController)

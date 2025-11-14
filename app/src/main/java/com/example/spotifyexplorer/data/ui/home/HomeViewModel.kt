@@ -3,9 +3,11 @@ package com.example.spotifyexplorer.data.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.spotifyexplorer.data.api.SpotifyService
+import com.example.spotifyexplorer.data.model.Album
 import com.example.spotifyexplorer.data.ui.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
@@ -16,6 +18,13 @@ class HomeViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState
+
+    private val _selectedAlbum = MutableStateFlow<Album?>(null)
+    val selectedAlbum = _selectedAlbum.asStateFlow()
+
+    fun selectAlbum(album: Album) {
+        _selectedAlbum.value = album
+    }
 
     fun searchArtist(query: String) {
         viewModelScope.launch {
