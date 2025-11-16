@@ -1,7 +1,10 @@
 package com.example.spotifyexplorer.data.ui.album
 
+import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,12 +19,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.R
 import com.example.spotifyexplorer.data.model.Album
+import com.example.spotifyexplorer.data.model.Artist
+import com.example.spotifyexplorer.data.ui.home.AlbumList
+import com.example.spotifyexplorer.data.ui.home.ArtistDetailsCard
 import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 
@@ -59,7 +66,7 @@ fun AlbumDetailScreen(
         }
     ) { innerPadding ->
         val configuration = LocalConfiguration.current
-        val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
         Column(
             modifier = Modifier
@@ -71,96 +78,206 @@ fun AlbumDetailScreen(
             val imageUrl = album.images.firstOrNull()?.url
 
             if (isLandscape) {
-                // Landscape layout: image + info side by side
+                // 🖥 Landscape layout: side-by-side
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(SpotifyDarkGray)
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    AlbumImage(imageUrl)
-                    AlbumInfo(album)
+                    Box(modifier = Modifier.weight(1f)) {
+                        AlbumDetailsCard(album)
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        /*TrackList(
+                            tracks = state.tracks,
+                        )*/
+                    }
                 }
             } else {
-                // Portrait layout: image on top, info below
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(SpotifyDarkGray)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    AlbumImage(imageUrl)
-                    Spacer(modifier = Modifier.height(24.dp))
-                    AlbumInfo(album)
-                }
+                // Portrait layout: stacked vertically
+                AlbumDetailsCard(album)
+                Spacer(modifier = Modifier.height(8.dp))
+                /*TrackList(
+                            tracks = state.tracks,
+                        )*/
             }
         }
     }
 }
 
 @Composable
-private fun AlbumImage(imageUrl: String?) {
-    if (imageUrl != null) {
-        Image(
-            painter = rememberAsyncImagePainter(imageUrl),
-            contentDescription = "Album Image",
+fun AlbumDetailsCard(
+    album: Album,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(SpotifyDarkGray)
+            .padding(20.dp)
+    ) {
+        AlbumDetailsContent(album)
+    }
+}
+
+
+@Composable
+fun AlbumDetailsContent(album: Album) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val screenWidth = configuration.screenWidthDp
+
+    val imageUrl = when {
+        screenWidth >= 768 && album.images.isNotEmpty() -> album.images[0].url
+        album.images.size > 1 -> album.images[1].url
+        album.images.isNotEmpty() -> album.images[0].url
+        else -> null
+    }
+
+    if (isLandscape) {
+        // Landscape: image + info side by side
+        Row(
             modifier = Modifier
-                .size(240.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            val imageSize = 100.dp
+
+            if (imageUrl != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = album.name,
+                    modifier = Modifier
+                        .size(imageSize)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.noimage),
+                    contentDescription = "Missing album image",
+                    modifier = Modifier
+                        .size(imageSize)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = album.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Release date: ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SpotifyGreen
+                    )
+                    Text(
+                        text = album.release_date,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Number of tracks: ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SpotifyGreen
+                    )
+                    Text(
+                        text = "${album.total_tracks}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        }
     } else {
-        Image(
-            painter = painterResource(id = R.drawable.noimage),
-            contentDescription = "Missing album image",
+        // Portrait: image on top, all info stacked vertically
+        Column(
             modifier = Modifier
-                .size(240.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
-    }
-}
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val imageSize = 180.dp
 
-@Composable
-private fun AlbumInfo(album: Album) {
-    Column(
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            text = album.name,
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
-            ),
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        DetailRow(label = "Release Date:", value = album.release_date)
-        DetailRow(label = "Total Tracks:", value = "${album.total_tracks}")
-    }
-}
+            if (imageUrl != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = album.name,
+                    modifier = Modifier
+                        .size(imageSize)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.noimage),
+                    contentDescription = "Missing album image",
+                    modifier = Modifier
+                        .size(imageSize)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
-@Composable
-private fun DetailRow(label: String, value: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 6.dp)
-    ) {
-        Text(
-            text = "$label ",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            color = SpotifyGreen
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-            color = MaterialTheme.colorScheme.onBackground
-        )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = album.name,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Release date: ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SpotifyGreen
+                )
+                Text(
+                    text = album.release_date,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Number of tracks: ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SpotifyGreen
+                )
+                Text(
+                    text = "${album.total_tracks}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        }
     }
 }
