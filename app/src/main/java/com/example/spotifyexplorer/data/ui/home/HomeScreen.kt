@@ -33,7 +33,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.R
 import com.example.spotifyexplorer.data.model.Album
 import com.example.spotifyexplorer.data.model.Artist
-import com.example.spotifyexplorer.data.ui.UiState
+import com.example.spotifyexplorer.data.home.HomeUiState
 import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 import kotlinx.coroutines.launch
@@ -135,9 +135,9 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 when (val state = uiState) {
-                    is UiState.Idle -> Text("Search for an artist to begin")
-                    is UiState.Loading -> CircularProgressIndicator()
-                    is UiState.Success -> {
+                    is HomeUiState.Idle -> Text("Search for an artist to begin")
+                    is HomeUiState.Loading -> CircularProgressIndicator()
+                    is HomeUiState.Success -> {
                         if (isLandscape) {
                             // 🖥 Landscape layout: side-by-side
                             Row(
@@ -170,7 +170,7 @@ fun HomeScreen(
                             )
                         }
                     }
-                    is UiState.Error -> Text("Error: ${state.message}")
+                    is HomeUiState.Error -> Text("Error: ${state.message}")
                 }
             }
         }

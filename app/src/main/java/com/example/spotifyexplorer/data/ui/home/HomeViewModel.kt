@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.spotifyexplorer.data.api.SpotifyService
 import com.example.spotifyexplorer.data.model.Album
-import com.example.spotifyexplorer.data.ui.UiState
+import com.example.spotifyexplorer.data.home.HomeUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,8 +16,8 @@ class HomeViewModel : ViewModel() {
     private val clientSecret = "6c994bd714a94ee79d8f6c985716c3a9"
     private val spotifyService = SpotifyService(clientId, clientSecret)
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
-    val uiState: StateFlow<UiState> = _uiState
+    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
+    val uiState: StateFlow<HomeUiState> = _uiState
 
     private val _selectedAlbum = MutableStateFlow<Album?>(null)
     val selectedAlbum = _selectedAlbum.asStateFlow()
@@ -28,18 +28,18 @@ class HomeViewModel : ViewModel() {
 
     fun searchArtist(query: String) {
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
+            _uiState.value = HomeUiState.Loading
             try {
                 val artist = spotifyService.searchArtist(query)
                 if (artist != null) {
                     val albumResponse = spotifyService.getArtistAlbums(artist.id)
                     val albums = albumResponse?.items ?: emptyList()
-                    _uiState.value = UiState.Success(artist, albums)
+                    _uiState.value = HomeUiState.Success(artist, albums)
                 } else {
-                    _uiState.value = UiState.Error("Artist not found")
+                    _uiState.value = HomeUiState.Error("Artist not found")
                 }
             } catch (e: Exception) {
-                _uiState.value = UiState.Error(e.message ?: "Unknown error")
+                _uiState.value = HomeUiState.Error(e.message ?: "Unknown error")
             }
         }
     }

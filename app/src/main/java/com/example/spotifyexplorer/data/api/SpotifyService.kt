@@ -10,6 +10,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import android.util.Base64
 import com.example.spotifyexplorer.data.model.AlbumResponse
+import com.example.spotifyexplorer.data.model.TrackResponse
 
 class SpotifyService(
     private val clientId: String,
@@ -80,6 +81,16 @@ class SpotifyService(
             return response.body()
         } else {
             throw Exception("Failed to fetch albums: ${response.errorBody()?.string()}")
+        }
+    }
+
+    suspend fun getAlbumTracks(albumId: String): TrackResponse? {
+        val token = getValidAccessToken()
+        val response = api.getAlbumTracks(bearer = "Bearer $token", albumId)
+        if (response.isSuccessful) {
+            return response.body()
+        } else {
+            throw Exception("Failed to fetch tracks: ${response.errorBody()?.string()}")
         }
     }
 

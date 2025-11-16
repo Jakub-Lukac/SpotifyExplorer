@@ -1,17 +1,42 @@
 package com.example.spotifyexplorer.data.ui.album
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,15 +45,16 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.R
 import com.example.spotifyexplorer.data.model.Album
-import com.example.spotifyexplorer.data.model.Artist
-import com.example.spotifyexplorer.data.ui.home.AlbumList
-import com.example.spotifyexplorer.data.ui.home.ArtistDetailsCard
+import com.example.spotifyexplorer.data.model.Track
+import com.example.spotifyexplorer.data.model.TrackResponse
 import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 
@@ -36,8 +62,15 @@ import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 @Composable
 fun AlbumDetailScreen(
     album: Album,
-    navController: NavController
+    navController: NavController,
+    viewModel: AlbumDetailViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(album.id) {
+        viewModel.loadAlbumTracks(album)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -75,30 +108,33 @@ fun AlbumDetailScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val imageUrl = album.images.firstOrNull()?.url
+            when (val state = uiState){
+                is AlbumUiState.Idle -> {}
+                is AlbumUiState.Loading -> CircularProgressIndicator()
+                is AlbumUiState.Success -> {
+                    val imageUrl = album.images.firstOrNull()?.url
 
-            if (isLandscape) {
-                // 🖥 Landscape layout: side-by-side
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Box(modifier = Modifier.weight(1f)) {
+                    if (isLandscape) {
+                        // 🖥 Landscape layout: side-by-side
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                AlbumDetailsCard(album)
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                TrackList(tracks = state.tracks, imageUrl = imageUrl)
+                            }
+                        }
+                    } else {
+                        // Portrait layout: stacked vertically
                         AlbumDetailsCard(album)
-                    }
-                    Box(modifier = Modifier.weight(1f)) {
-                        /*TrackList(
-                            tracks = state.tracks,
-                        )*/
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TrackList(tracks = state.tracks, imageUrl = imageUrl)
                     }
                 }
-            } else {
-                // Portrait layout: stacked vertically
-                AlbumDetailsCard(album)
-                Spacer(modifier = Modifier.height(8.dp))
-                /*TrackList(
-                            tracks = state.tracks,
-                        )*/
+                is AlbumUiState.Error -> Text("Error: ${state.message}")
             }
         }
     }
@@ -281,3 +317,125 @@ fun AlbumDetailsContent(album: Album) {
         }
     }
 }
+
+@Composable
+fun TrackList(tracks: TrackResponse, imageUrl: String?) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        items(tracks.items) { track ->
+            TrackCard(track = track, imageUrl = imageUrl, isLandscape = isLandscape)
+        }
+    }
+}
+
+fun formatDuration(ms: Int): String {
+    val totalSeconds = ms / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format("%d:%02d", minutes, seconds)
+}
+
+@Composable
+fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean) {
+
+    val maxCardWidth = if (isLandscape) 500.dp else Dp.Unspecified
+    val cardHeight = if (isLandscape) 180.dp else Dp.Unspecified
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .widthIn(max = maxCardWidth)
+            .heightIn(max = cardHeight),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        if (isLandscape) {
+            // LANDSCAPE: fixed height, split with weights
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.5f)
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(imageUrl),
+                        contentDescription = track.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.5f)
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = track.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "Track #${track.track_number}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = formatDuration(track.duration_ms),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        } else {
+            // PORTRAIT: natural height using aspect ratio for image
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1.4f) // keeps 70/30 visual split
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(imageUrl),
+                        contentDescription = track.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = track.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "Track #${track.track_number}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = formatDuration(track.duration_ms),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+

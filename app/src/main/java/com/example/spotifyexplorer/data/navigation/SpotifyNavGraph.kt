@@ -11,7 +11,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.spotifyexplorer.data.ui.UiState
+import com.example.spotifyexplorer.data.home.HomeUiState
 import com.example.spotifyexplorer.data.ui.about.AboutScreen
 import com.example.spotifyexplorer.data.ui.artist.ArtistDetailScreen
 import com.example.spotifyexplorer.data.ui.favoriteTracks.FavoriteTracksScreen
@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.spotifyexplorer.data.ui.album.AlbumDetailScreen
+import com.example.spotifyexplorer.data.ui.album.AlbumDetailViewModel
 
 enum class SpotifyScreens() {
     Home,
@@ -57,7 +58,7 @@ fun SpotifyNavGraph(
 
             val uiState = homeViewModel.uiState.collectAsState().value
             Log.d("State", "$uiState")
-            val artist = (uiState as? UiState.Success)?.artist
+            val artist = (uiState as? HomeUiState.Success)?.artist
             Log.d("Artist", "$artist")
 
             if (artist != null) {
@@ -85,12 +86,15 @@ fun SpotifyNavGraph(
             }
             val homeViewModel: HomeViewModel = viewModel(homeEntry)
 
+            val albumDetailViewModel: AlbumDetailViewModel = viewModel(backStackEntry)
+
             val selectedAlbum by homeViewModel.selectedAlbum.collectAsState()
 
             if (selectedAlbum != null) {
                 AlbumDetailScreen(
                     album = selectedAlbum!!,
-                    navController = navController
+                    navController = navController,
+                    viewModel = albumDetailViewModel
                 )
             } else {
                 Text("Album details unavailable")
