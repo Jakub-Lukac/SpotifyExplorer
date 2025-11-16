@@ -22,14 +22,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -40,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -57,6 +62,7 @@ import com.example.spotifyexplorer.data.model.Track
 import com.example.spotifyexplorer.data.model.TrackResponse
 import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -341,7 +347,7 @@ fun formatDuration(ms: Int): String {
 }
 
 @Composable
-fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean) {
+fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick: (Track) -> Unit = {}) {
 
     val maxCardWidth = if (isLandscape) 500.dp else Dp.Unspecified
     val cardHeight = if (isLandscape) 180.dp else Dp.Unspecified
@@ -371,6 +377,22 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean) {
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+
+                    SmallFloatingActionButton(
+                        onClick = { onAddClick(track) },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp), // slightly smaller padding
+                        containerColor = SpotifyGreen,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.plus),
+                            contentDescription = "Add track to favorites",
+                            modifier = Modifier.size(16.dp) // optional: shrink icon
+                        )
+                    }
                 }
 
                 Column(
@@ -411,6 +433,22 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean) {
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+
+                    SmallFloatingActionButton(
+                        onClick = { onAddClick(track) },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp), // slightly smaller padding
+                        containerColor = SpotifyGreen,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.plus),
+                            contentDescription = "Add track to favorites",
+                            modifier = Modifier.size(16.dp) // optional: shrink icon
+                        )
+                    }
                 }
 
                 Column(
@@ -439,7 +477,6 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean) {
         }
     }
 }
-
 
 
 
