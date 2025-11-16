@@ -62,6 +62,7 @@ import com.example.spotifyexplorer.R
 import com.example.spotifyexplorer.data.model.Album
 import com.example.spotifyexplorer.data.model.Track
 import com.example.spotifyexplorer.data.model.TrackResponse
+import com.example.spotifyexplorer.data.utils.showCustomToast
 import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 
@@ -384,9 +385,11 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick:
 
                     SmallFloatingActionButton(
                         onClick = {
-                            val isAdded = (0..1).random() == 0
-                            val message = if (isAdded) "Track added to favorites" else "Track is already in favorites"
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            showCustomToast(
+                                context = context,
+                                message = "Track added to favorites!",
+                                iconRes =  R.drawable.check
+                            )
                         },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -444,9 +447,11 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick:
 
                     SmallFloatingActionButton(
                         onClick = {
-                            val isAdded = (0..1).random() == 0
-                            val message = if (isAdded) "Track added to favorites" else "Track is already in favorites"
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            showCustomToast(
+                                context = context,
+                                message = "Track added to favorites!",
+                                iconRes =  R.drawable.check
+                            )
                         },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
