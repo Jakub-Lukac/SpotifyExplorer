@@ -14,7 +14,7 @@ fun scheduleSpotifyTokenRefresh(context: Context, clientId: String, clientSecret
 
     val tokenWork = PeriodicWorkRequestBuilder<SpotifyTokenWorker>(
         15, TimeUnit.MINUTES
-    )
+    ) // run every 15 minutes
         .setInputData(inputData)
         .build()
 

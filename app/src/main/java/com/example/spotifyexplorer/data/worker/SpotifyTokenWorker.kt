@@ -24,7 +24,7 @@ class SpotifyTokenWorker(
 
             Log.d("SpotifyTokenWorker", "Refreshed token: $token")
 
-            val expiration = System.currentTimeMillis() + 55 * 60 * 1000 // example 55 mins
+            val expiration = System.currentTimeMillis() + 60 * 60 * 1000 // 60 mins
             tokenStore.saveToken(token, expiration)
 
             Log.d("SpotifyTokenWorker", "Saved token. Expires at: $expiration")
