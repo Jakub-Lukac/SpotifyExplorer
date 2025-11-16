@@ -20,10 +20,14 @@ import com.example.spotifyexplorer.data.ui.home.HomeViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.spotifyexplorer.data.datastore.TokenDataStore
+import com.example.spotifyexplorer.data.home.HomeViewModelFactory
 import com.example.spotifyexplorer.data.ui.album.AlbumDetailScreen
 import com.example.spotifyexplorer.data.ui.album.AlbumDetailViewModel
+import com.example.spotifyexplorer.data.ui.album.AlbumDetailViewModelFactory
 
 enum class SpotifyScreens() {
     Home,
@@ -36,12 +40,16 @@ fun SpotifyNavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val tokenStore = remember { TokenDataStore(context) }
+
     NavHost(
         navController = navController,
         startDestination = "home"
     ) {
         composable("home") { backStackEntry ->
-            val viewModel: HomeViewModel = viewModel(backStackEntry)
+
+            val viewModel: HomeViewModel = viewModel(backStackEntry, factory = HomeViewModelFactory(tokenStore))
             HomeScreen(
                 modifier = modifier,
                 navController = navController,
@@ -54,7 +62,7 @@ fun SpotifyNavGraph(
             val homeEntry = remember(backStackEntry) {
                 navController.getBackStackEntry("home")
             }
-            val homeViewModel: HomeViewModel = viewModel(homeEntry)
+            val homeViewModel: HomeViewModel = viewModel(homeEntry, factory = HomeViewModelFactory(tokenStore))
 
             val uiState = homeViewModel.uiState.collectAsState().value
             Log.d("State", "$uiState")
@@ -84,9 +92,9 @@ fun SpotifyNavGraph(
             val homeEntry = remember(backStackEntry) {
                 navController.getBackStackEntry("home")
             }
-            val homeViewModel: HomeViewModel = viewModel(homeEntry)
+            val homeViewModel: HomeViewModel = viewModel(homeEntry, factory = HomeViewModelFactory(tokenStore))
 
-            val albumDetailViewModel: AlbumDetailViewModel = viewModel(backStackEntry)
+            val albumDetailViewModel: AlbumDetailViewModel = viewModel(backStackEntry, factory = AlbumDetailViewModelFactory(tokenStore))
 
             val selectedAlbum by homeViewModel.selectedAlbum.collectAsState()
 

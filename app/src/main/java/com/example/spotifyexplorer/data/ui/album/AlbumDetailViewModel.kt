@@ -3,18 +3,21 @@ package com.example.spotifyexplorer.data.ui.album
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.spotifyexplorer.data.api.SpotifyService
+import com.example.spotifyexplorer.data.datastore.TokenDataStore
 import com.example.spotifyexplorer.data.home.HomeUiState
 import com.example.spotifyexplorer.data.model.Album
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class AlbumDetailViewModel : ViewModel() {
+class AlbumDetailViewModel(
+    private val tokenStore: TokenDataStore
+) : ViewModel() {
 
     private val clientId = "03619e7aa0344a45a9fe014a969a62ea"
     private val clientSecret = "6c994bd714a94ee79d8f6c985716c3a9"
 
-    private val spotifyService = SpotifyService(clientId, clientSecret)
+    private val spotifyService = SpotifyService(clientId, clientSecret, tokenStore)
     private val _uiState = MutableStateFlow<AlbumUiState>(AlbumUiState.Idle)
     val uiState: StateFlow<AlbumUiState> = _uiState
 

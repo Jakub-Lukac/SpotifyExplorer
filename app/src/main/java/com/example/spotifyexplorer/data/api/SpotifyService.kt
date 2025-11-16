@@ -9,12 +9,15 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import android.util.Base64
+import com.example.spotifyexplorer.data.datastore.TokenDataStore
 import com.example.spotifyexplorer.data.model.AlbumResponse
 import com.example.spotifyexplorer.data.model.TrackResponse
+import kotlinx.coroutines.flow.firstOrNull
 
 class SpotifyService(
     private val clientId: String,
-    private val clientSecret: String
+    private val clientSecret: String,
+    private val tokenStore: TokenDataStore
 ) {
     private val authBaseUrl = "https://accounts.spotify.com/"
     private val apiBaseUrl = "https://api.spotify.com/v1/"
@@ -43,19 +46,29 @@ class SpotifyService(
     }
 
     // Ensure valid token
-    private suspend fun getValidAccessToken(): String = mutex.withLock {
+     suspend fun getValidAccessToken(): String = mutex.withLock {
         val now = System.currentTimeMillis()
+        // Read from DataStore if available
         if (accessToken == null || now >= tokenExpiration) {
-            val credentials = "$clientId:$clientSecret"
-            val basicAuth = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
-            val response = authApi.getAccessToken("Basic $basicAuth")
+            val storedToken = tokenStore.accessToken.firstOrNull()
+            val storedExpiration = tokenStore.expirationTime.firstOrNull() ?: 0L
 
-            if (response.isSuccessful) {
-                val tokenResponse = response.body()!!
-                accessToken = tokenResponse.access_token
-                tokenExpiration = now + tokenResponse.expires_in * 1000
+            if (storedToken != null && now < storedExpiration) {
+                accessToken = storedToken
+                tokenExpiration = storedExpiration
             } else {
-                throw Exception("Failed to obtain token: ${response.errorBody()?.string()}")
+                // Fetch new token from Spotify
+                val credentials = "$clientId:$clientSecret"
+                val basicAuth = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
+                val response = authApi.getAccessToken("Basic $basicAuth")
+                if (response.isSuccessful) {
+                    val tokenResponse = response.body()!!
+                    accessToken = tokenResponse.access_token
+                    tokenExpiration = now + tokenResponse.expires_in * 1000
+                    tokenStore.saveToken(accessToken!!, tokenExpiration)
+                } else {
+                    throw Exception("Failed to obtain token")
+                }
             }
         }
         accessToken!!
