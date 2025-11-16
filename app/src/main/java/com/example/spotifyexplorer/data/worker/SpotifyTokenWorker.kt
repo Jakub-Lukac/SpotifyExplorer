@@ -22,11 +22,16 @@ class SpotifyTokenWorker(
             val spotifyService = SpotifyService(clientId, clientSecret, tokenStore)
             val token = spotifyService.getValidAccessToken()
 
+            Log.d("SpotifyTokenWorker", "Refreshed token: $token")
+
             val expiration = System.currentTimeMillis() + 55 * 60 * 1000 // example 55 mins
             tokenStore.saveToken(token, expiration)
 
+            Log.d("SpotifyTokenWorker", "Saved token. Expires at: $expiration")
+
             return Result.success()
         } catch (e: Exception) {
+            Log.e("SpotifyTokenWorker", "Failed to refresh token", e)
             return Result.retry()
         }
     }
