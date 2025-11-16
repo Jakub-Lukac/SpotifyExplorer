@@ -382,11 +382,14 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean) {
                     Text(
                         text = track.name,
                         style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1
+                        maxLines = 1,
+                        color = SpotifyGreen,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Track #${track.track_number}",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = formatDuration(track.duration_ms),
@@ -418,11 +421,14 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean) {
                     Text(
                         text = track.name,
                         style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1
+                        maxLines = 1,
+                        color = SpotifyGreen,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Track #${track.track_number}",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = formatDuration(track.duration_ms),

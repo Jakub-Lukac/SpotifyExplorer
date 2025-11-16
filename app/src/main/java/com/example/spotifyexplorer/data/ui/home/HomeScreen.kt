@@ -430,12 +430,13 @@ fun AlbumCard(
                 Text(
                     text = album.name,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = SpotifyGreen
                 )
                 Text(
                     text = "Released: ${album.release_date}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
