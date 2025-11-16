@@ -1,6 +1,7 @@
 package com.example.spotifyexplorer.data.ui.album
 
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -352,6 +354,8 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick:
     val maxCardWidth = if (isLandscape) 500.dp else Dp.Unspecified
     val cardHeight = if (isLandscape) 180.dp else Dp.Unspecified
 
+    val context = LocalContext.current
+
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
@@ -379,7 +383,11 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick:
                     )
 
                     SmallFloatingActionButton(
-                        onClick = { onAddClick(track) },
+                        onClick = {
+                            val isAdded = (0..1).random() == 0
+                            val message = if (isAdded) "Track added to favorites" else "Track is already in favorites"
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(4.dp), // slightly smaller padding
@@ -435,7 +443,11 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick:
                     )
 
                     SmallFloatingActionButton(
-                        onClick = { onAddClick(track) },
+                        onClick = {
+                            val isAdded = (0..1).random() == 0
+                            val message = if (isAdded) "Track added to favorites" else "Track is already in favorites"
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(4.dp), // slightly smaller padding
