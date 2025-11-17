@@ -9,6 +9,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import android.util.Base64
+import android.util.Log
 import com.example.spotifyexplorer.data.datastore.TokenDataStore
 import com.example.spotifyexplorer.data.model.AlbumResponse
 import com.example.spotifyexplorer.data.model.TrackResponse
@@ -46,37 +47,43 @@ class SpotifyService(
     }
 
     // Ensure valid token
-     suspend fun getValidAccessToken(): String = mutex.withLock {
+    suspend fun getValidAccessToken(): String = mutex.withLock {
         val now = System.currentTimeMillis()
-        // Read from DataStore if available
-        if (accessToken == null || now >= tokenExpiration) {
-            val storedToken = tokenStore.accessToken.firstOrNull()
-            val storedExpiration = tokenStore.expirationTime.firstOrNull() ?: 0L
 
-            if (storedToken != null && now < storedExpiration) {
-                accessToken = storedToken
-                tokenExpiration = storedExpiration
+        val storedToken = tokenStore.accessToken.firstOrNull()
+        val storedExpiration = tokenStore.expirationTime.firstOrNull() ?: 0L
+        Log.d("Expiration", "$now")
+        Log.d("Expiration", "$storedExpiration")
+
+        if (storedToken != null && now < storedExpiration) {
+            // Only use it if still valid
+            accessToken = storedToken
+            tokenExpiration = storedExpiration
+            Log.d("Access Token", "Using stored token")
+        } else {
+            // Fetch a new token
+            Log.d("Access Token", "Fetching new token")
+            val credentials = "$clientId:$clientSecret"
+            val basicAuth = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
+            val response = authApi.getAccessToken("Basic $basicAuth")
+            if (response.isSuccessful) {
+                val tokenResponse = response.body()!!
+                accessToken = tokenResponse.access_token
+                tokenExpiration = now + tokenResponse.expires_in * 1000
+                tokenStore.saveToken(accessToken!!, tokenExpiration)
+                Log.d("Access Token", "New token saved")
             } else {
-                // Fetch new token from Spotify
-                val credentials = "$clientId:$clientSecret"
-                val basicAuth = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
-                val response = authApi.getAccessToken("Basic $basicAuth")
-                if (response.isSuccessful) {
-                    val tokenResponse = response.body()!!
-                    accessToken = tokenResponse.access_token
-                    tokenExpiration = now + tokenResponse.expires_in * 1000
-                    tokenStore.saveToken(accessToken!!, tokenExpiration)
-                } else {
-                    throw Exception("Failed to obtain token")
-                }
+                throw Exception("Failed to obtain token")
             }
         }
-        accessToken!!
+
+        return accessToken!!
     }
 
     // --- API methods ---
 
     suspend fun searchArtist(artistName: String): Artist? {
+        Log.d("Search artist", "Searching for artist")
         val token = getValidAccessToken()
         val response = api.searchArtist("Bearer $token", artistName)
 

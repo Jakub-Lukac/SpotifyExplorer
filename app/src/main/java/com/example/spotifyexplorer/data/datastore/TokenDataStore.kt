@@ -30,4 +30,12 @@ class TokenDataStore(private val context: Context) {
 
     val expirationTime: Flow<Long?>
         get() = context.dataStore.data.map { it[EXPIRATION] }
+
+    suspend fun clearToken() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(ACCESS_TOKEN)
+            prefs.remove(EXPIRATION)
+        }
+    }
+
 }
