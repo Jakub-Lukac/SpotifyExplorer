@@ -15,13 +15,6 @@ class FavoriteTracksViewModel(
     val favorites = repository.getFavorites()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
-    fun addFavorite(track: FavoriteTrack, onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val added = repository.addTrack(track)
-            onResult(added)
-        }
-    }
-
     fun removeFavorite(trackId: String) {
         viewModelScope.launch {
             repository.removeTrack(trackId)

@@ -5,9 +5,9 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "favorite_tracks")
 data class FavoriteTrack(
-    @PrimaryKey val id: String,        // Spotify track ID
+    @PrimaryKey val id: String,
     val name: String,
-    val artist: String,
-    val albumArtUrl: String? = null,   // optional
-    val addedAt: Long = System.currentTimeMillis()
+    val duration_ms: Int,
+    val track_number: Int,
+    val albumImage: String?,
 )

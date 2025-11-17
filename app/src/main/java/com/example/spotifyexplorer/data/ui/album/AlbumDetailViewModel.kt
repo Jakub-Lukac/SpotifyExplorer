@@ -4,14 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.spotifyexplorer.data.api.SpotifyService
 import com.example.spotifyexplorer.data.datastore.TokenDataStore
+import com.example.spotifyexplorer.data.db.FavoriteTrackRepository
 import com.example.spotifyexplorer.data.home.HomeUiState
 import com.example.spotifyexplorer.data.model.Album
+import com.example.spotifyexplorer.data.model.FavoriteTrack
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class AlbumDetailViewModel(
-    private val tokenStore: TokenDataStore
+    private val tokenStore: TokenDataStore,
+    private val repository: FavoriteTrackRepository
 ) : ViewModel() {
 
     private val clientId = "03619e7aa0344a45a9fe014a969a62ea"
@@ -20,6 +23,13 @@ class AlbumDetailViewModel(
     private val spotifyService = SpotifyService(clientId, clientSecret, tokenStore)
     private val _uiState = MutableStateFlow<AlbumUiState>(AlbumUiState.Idle)
     val uiState: StateFlow<AlbumUiState> = _uiState
+
+    fun addFavorite(track: FavoriteTrack, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val added = repository.addTrack(track)
+            onResult(added)
+        }
+    }
 
     fun loadAlbumTracks(album: Album) {
         viewModelScope.launch {

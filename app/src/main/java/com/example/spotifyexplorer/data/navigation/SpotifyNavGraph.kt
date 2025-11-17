@@ -94,7 +94,9 @@ fun SpotifyNavGraph(
             }
             val homeViewModel: HomeViewModel = viewModel(homeEntry, factory = HomeViewModelFactory(tokenStore))
 
-            val albumDetailViewModel: AlbumDetailViewModel = viewModel(backStackEntry, factory = AlbumDetailViewModelFactory(tokenStore))
+            val context = LocalContext.current
+
+            val albumDetailViewModel: AlbumDetailViewModel = viewModel(backStackEntry, factory = AlbumDetailViewModelFactory(context, tokenStore))
 
             val selectedAlbum by homeViewModel.selectedAlbum.collectAsState()
 
@@ -108,8 +110,6 @@ fun SpotifyNavGraph(
                 Text("Album details unavailable")
             }
         }
-
-
 
         composable(SpotifyScreens.FavoriteTracks.name) {
             FavoriteTracksScreen(modifier, navController)

@@ -60,6 +60,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.R
 import com.example.spotifyexplorer.data.model.Album
+import com.example.spotifyexplorer.data.model.FavoriteTrack
 import com.example.spotifyexplorer.data.model.Track
 import com.example.spotifyexplorer.data.model.TrackResponse
 import com.example.spotifyexplorer.data.utils.showCustomToast
@@ -75,6 +76,7 @@ fun AlbumDetailScreen(
     viewModel: AlbumDetailViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(album.id) {
         viewModel.loadAlbumTracks(album)
@@ -133,14 +135,67 @@ fun AlbumDetailScreen(
                                 AlbumDetailsCard(album)
                             }
                             Box(modifier = Modifier.weight(1f)) {
-                                TrackList(tracks = state.tracks, imageUrl = imageUrl)
+                                TrackList(
+                                    tracks = state.tracks,
+                                    imageUrl = imageUrl,
+                                    onAddFavorite = { track ->
+                                        val favorite = FavoriteTrack(
+                                            id = track.id,
+                                            name = track.name,
+                                            duration_ms = track.duration_ms,
+                                            track_number = track.track_number,
+                                            albumImage = imageUrl
+                                        )
+
+                                        viewModel.addFavorite(favorite) { added ->
+                                            if (added) {
+                                                showCustomToast(
+                                                    context = context,
+                                                    message = "Track added to favorites!",
+                                                    iconRes = R.drawable.check
+                                                )
+                                            } else {
+                                                showCustomToast(
+                                                    context = context,
+                                                    message = "Track is already in favorites",
+                                                    iconRes = R.drawable.cross
+                                                )
+                                            }
+                                        }
+                                    }
+                                )
                             }
                         }
                     } else {
                         // Portrait layout: stacked vertically
                         AlbumDetailsCard(album)
                         Spacer(modifier = Modifier.height(8.dp))
-                        TrackList(tracks = state.tracks, imageUrl = imageUrl)
+                        TrackList(tracks = state.tracks, imageUrl = imageUrl,
+                            onAddFavorite = { track ->
+                                val favorite = FavoriteTrack(
+                                    id = track.id,
+                                    name = track.name,
+                                    duration_ms = track.duration_ms,
+                                    track_number = track.track_number,
+                                    albumImage = imageUrl
+                                )
+
+                                viewModel.addFavorite(favorite) { added ->
+                                    if (added) {
+                                        showCustomToast(
+                                            context = context,
+                                            message = "Track added to favorites!",
+                                            iconRes = R.drawable.check
+                                        )
+                                    } else {
+                                        showCustomToast(
+                                            context = context,
+                                            message = "Track is already in favorites",
+                                            iconRes = R.drawable.cross
+                                        )
+                                    }
+                                }
+                            })
                     }
                 }
                 is AlbumUiState.Error -> Text("Error: ${state.message}")
@@ -328,7 +383,11 @@ fun AlbumDetailsContent(album: Album) {
 }
 
 @Composable
-fun TrackList(tracks: TrackResponse, imageUrl: String?) {
+fun TrackList(
+    tracks: TrackResponse,
+    imageUrl: String?,
+    onAddFavorite: (Track) -> Unit
+) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -337,7 +396,7 @@ fun TrackList(tracks: TrackResponse, imageUrl: String?) {
         modifier = Modifier.fillMaxWidth()
     ) {
         items(tracks.items) { track ->
-            TrackCard(track = track, imageUrl = imageUrl, isLandscape = isLandscape)
+            TrackCard(track = track, imageUrl = imageUrl, isLandscape = isLandscape, onAddFavorite = {onAddFavorite(track)})
         }
     }
 }
@@ -350,7 +409,13 @@ fun formatDuration(ms: Int): String {
 }
 
 @Composable
-fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick: (Track) -> Unit = {}) {
+fun TrackCard(
+    track: Track,
+    imageUrl: String?,
+    isLandscape: Boolean,
+    onAddFavorite: () -> Unit
+)
+    {
 
     val maxCardWidth = if (isLandscape) 500.dp else Dp.Unspecified
     val cardHeight = if (isLandscape) 180.dp else Dp.Unspecified
@@ -385,11 +450,7 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick:
 
                     SmallFloatingActionButton(
                         onClick = {
-                            showCustomToast(
-                                context = context,
-                                message = "Track added to favorites!",
-                                iconRes =  R.drawable.check
-                            )
+                            onAddFavorite()
                         },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -447,11 +508,7 @@ fun TrackCard(track: Track, imageUrl: String?, isLandscape: Boolean, onAddClick:
 
                     SmallFloatingActionButton(
                         onClick = {
-                            showCustomToast(
-                                context = context,
-                                message = "Track added to favorites!",
-                                iconRes =  R.drawable.check
-                            )
+                            onAddFavorite()
                         },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
