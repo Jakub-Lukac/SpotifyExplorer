@@ -11,7 +11,7 @@ interface FavoriteTrackDao {
     suspend fun insertTrack(track: FavoriteTrack): Long
     // returns -1 if already exists
 
-    @Query("SELECT * FROM favorite_tracks ORDER BY addedAt DESC")
+    @Query("SELECT * FROM favorite_tracks")
     fun getAllFavoriteTracks(): Flow<List<FavoriteTrack>>
 
     @Query("SELECT EXISTS(SELECT 1 FROM favorite_tracks WHERE id = :trackId)")
