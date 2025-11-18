@@ -80,7 +80,7 @@ fun AboutScreen(
                 )
                 NavigationDrawerItem(
                     label = { Text("About") },
-                    selected = false,
+                    selected = true,
                     onClick = {
                         scope.launch { drawerState.close() }
                     },

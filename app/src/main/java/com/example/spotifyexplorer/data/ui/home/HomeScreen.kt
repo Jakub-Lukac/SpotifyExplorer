@@ -64,7 +64,7 @@ fun HomeScreen(
                 )
                 NavigationDrawerItem(
                     label = { Text("Home") },
-                    selected = false,
+                    selected = true,
                     onClick = {
                         scope.launch { drawerState.close() }
                     },

@@ -7,26 +7,13 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.spotifyexplorer.data.db.FavoriteTrackRepository
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,13 +21,15 @@ import kotlinx.coroutines.launch
 fun FavoriteTracksScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    viewModel: FavoriteTracksViewModel = viewModel()
+    repository: FavoriteTrackRepository
 ) {
+    val viewModel: FavoriteTracksViewModel = viewModel(
+        factory = FavoriteTracksViewModelFactory(repository)
+    )
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-
     val favorites by viewModel.favorites.collectAsState()
-
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -56,20 +45,14 @@ fun FavoriteTracksScreen(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        navController.popBackStack(
-                            route = "home",
-                            inclusive = false,
-                            saveState = true
-                        )
+                        navController.popBackStack("home", inclusive = false, saveState = true)
                     },
                     icon = { Icon(Icons.Default.Home, contentDescription = null) }
                 )
                 NavigationDrawerItem(
                     label = { Text("Favorites") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                    },
+                    selected = true,
+                    onClick = { scope.launch { drawerState.close() } },
                     icon = { Icon(Icons.Default.Favorite, contentDescription = null) }
                 )
                 NavigationDrawerItem(
@@ -101,7 +84,7 @@ fun FavoriteTracksScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(16.dp),
-                text = "Favorite Tracks Screen"
+                text = "Favorite Tracks Screen: ${favorites.size} tracks"
             )
         }
     }

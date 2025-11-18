@@ -24,6 +24,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.spotifyexplorer.data.datastore.TokenDataStore
+import com.example.spotifyexplorer.data.db.AppDatabase
+import com.example.spotifyexplorer.data.db.FavoriteTrackRepository
 import com.example.spotifyexplorer.data.home.HomeViewModelFactory
 import com.example.spotifyexplorer.data.ui.album.AlbumDetailScreen
 import com.example.spotifyexplorer.data.ui.album.AlbumDetailViewModel
@@ -112,8 +114,19 @@ fun SpotifyNavGraph(
         }
 
         composable(SpotifyScreens.FavoriteTracks.name) {
-            FavoriteTracksScreen(modifier, navController)
+            val context = LocalContext.current
+            // Get your DAO from the database
+            val favoriteDao = remember { AppDatabase.getInstance(context).favoriteTrackDao() }
+            // Create repository
+            val repository = remember { FavoriteTrackRepository(favoriteDao) }
+
+            FavoriteTracksScreen(
+                modifier = modifier,
+                navController = navController,
+                repository = repository
+            )
         }
+
 
         composable(SpotifyScreens.About.name) {
             AboutScreen(modifier, navController)
