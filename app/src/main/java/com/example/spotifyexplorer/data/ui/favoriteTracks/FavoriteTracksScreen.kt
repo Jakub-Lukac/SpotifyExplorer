@@ -117,20 +117,27 @@ fun FavoriteTracksScreen(
             }
         ) { innerPadding ->
             if (favorites.isEmpty()) {
-                Text(
-                    text = "No favorite tracks yet!",
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(16.dp)
-                )
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No favorite tracks yet!",
+                        color = SpotifyGreen,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
             } else {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .padding(horizontal = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     items(favorites) { track ->
                         FavoriteTrackCard(
@@ -201,7 +208,7 @@ fun FavoriteTrackCard(
                         shape = CircleShape
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.plus),
+                            painter = painterResource(id = R.drawable.minus),
                             contentDescription = "Add track to favorites",
                             modifier = Modifier.size(16.dp) // optional: shrink icon
                         )
@@ -259,7 +266,7 @@ fun FavoriteTrackCard(
                         shape = CircleShape
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.plus),
+                            painter = painterResource(id = R.drawable.minus),
                             contentDescription = "Add track to favorites",
                             modifier = Modifier.size(16.dp) // optional: shrink icon
                         )
