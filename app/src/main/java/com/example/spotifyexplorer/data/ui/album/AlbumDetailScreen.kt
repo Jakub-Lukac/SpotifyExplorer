@@ -417,8 +417,6 @@ fun TrackCard(
     val maxCardWidth = if (isLandscape) 500.dp else Dp.Unspecified
     val cardHeight = if (isLandscape) 180.dp else Dp.Unspecified
 
-    val context = LocalContext.current
-
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
