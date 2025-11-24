@@ -77,6 +77,10 @@ class HomeViewModelTest {
         val mockAlbumResponse = AlbumResponse(total = 1, items = mockAlbums)
 
         // Mock the constructed SpotifyService used inside the ViewModel
+        // anyConstructed is a MockK feature
+        // coEvery for suspend functions, to mock behavior of functions
+        // so mock spotify service calls search artist with mock query and returns mock artist response
+        // same for album
         coEvery { anyConstructed<SpotifyService>().searchArtist(query) } returns mockArtist
         coEvery { anyConstructed<SpotifyService>().getArtistAlbums(mockArtist.id) } returns mockAlbumResponse
 
@@ -96,6 +100,8 @@ class HomeViewModelTest {
             assertEquals(mockAlbums, successState.albums)
         }
 
+        // coVerify for suspend functions
+        // check whether the the function was called with specific parameters during test
         coVerify { anyConstructed<SpotifyService>().searchArtist(query) }
         coVerify { anyConstructed<SpotifyService>().getArtistAlbums(mockArtist.id) }
     }
