@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -137,6 +140,10 @@ fun FavoriteTracksScreen(
                 )
             }
         ) { innerPadding ->
+            // Evaluate orientation inside the Scaffold
+            val configuration = LocalConfiguration.current
+            val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
             if (favorites.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -153,26 +160,55 @@ fun FavoriteTracksScreen(
                 }
 
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    items(favorites) { track ->
-                        FavoriteTrackCard(
-                            track = track,
-                            onRemoveFavorite = {
-                                viewModel.removeFavorite(track.id)
-                                showCustomToast(
-                                    context = context,
-                                    message = "Track removed from favorites!",
-                                    iconRes = R.drawable.check
-                                )
-                            },
-                            onEditFavorite = { editingTrack = it}
-                        )
+                if (isLandscape) {
+                    // Landscape: Two columns
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        items(favorites) { track ->
+                            FavoriteTrackCard(
+                                track = track,
+                                onRemoveFavorite = {
+                                    viewModel.removeFavorite(track.id)
+                                    showCustomToast(
+                                        context = context,
+                                        message = "Track removed from favorites!",
+                                        iconRes = R.drawable.check
+                                    )
+                                },
+                                onEditFavorite = { editingTrack = it }
+                            )
+                        }
+                    }
+                } else {
+                    // Portrait: Single column
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        items(favorites) { track ->
+                            FavoriteTrackCard(
+                                track = track,
+                                onRemoveFavorite = {
+                                    viewModel.removeFavorite(track.id)
+                                    showCustomToast(
+                                        context = context,
+                                        message = "Track removed from favorites!",
+                                        iconRes = R.drawable.check
+                                    )
+                                },
+                                onEditFavorite = { editingTrack = it }
+                            )
+                        }
                     }
                 }
             }
@@ -207,174 +243,86 @@ fun FavoriteTrackCard(
     onRemoveFavorite: (String) -> Unit,
     onEditFavorite: (FavoriteTrack) -> Unit
 ){
-    val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-
-    val maxCardWidth = if (isLandscape) 500.dp else Dp.Unspecified
-    val cardHeight = if (isLandscape) 180.dp else Dp.Unspecified
-
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .widthIn(max = maxCardWidth)
-            .heightIn(max = cardHeight),
+            .padding(horizontal = 20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        if (isLandscape) {
-            // LANDSCAPE: fixed height, split with weights
-            Column(modifier = Modifier.fillMaxSize()) {
-                Box(
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(2f)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(track.albumImage),
+                    contentDescription = track.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                SmallFloatingActionButton(
+                    onClick = {
+                        onEditFavorite(track)
+                    },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.5f)
+                        .align(Alignment.BottomStart)
+                        .padding(4.dp),
+                    containerColor = SpotifyGreen,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = CircleShape
                 ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(track.albumImage),
-                        contentDescription = track.name,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                    Icon(
+                        painter = painterResource(id = R.drawable.gear),
+                        contentDescription = "Edit favorite track",
+                        modifier = Modifier.size(16.dp)
                     )
-
-                    SmallFloatingActionButton(
-                        onClick = {
-                            onEditFavorite(track)
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(4.dp), // slightly smaller padding
-                        containerColor = SpotifyGreen,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shape = CircleShape
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.gear),
-                            contentDescription = "Edit favorite track",
-                            modifier = Modifier.size(16.dp) // optional: shrink icon
-                        )
-                    }
-
-                    SmallFloatingActionButton(
-                        onClick = {
-                            onRemoveFavorite(track.id)
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(4.dp), // slightly smaller padding
-                        containerColor = SpotifyGreen,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shape = CircleShape
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.minus),
-                            contentDescription = "Add track to favorites",
-                            modifier = Modifier.size(16.dp) // optional: shrink icon
-                        )
-                    }
-
                 }
 
-                Column(
+                SmallFloatingActionButton(
+                    onClick = {
+                        onRemoveFavorite(track.id)
+                    },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.5f)
-                        .padding(12.dp)
+                        .align(Alignment.BottomEnd)
+                        .padding(4.dp),
+                    containerColor = SpotifyGreen,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = CircleShape
                 ) {
-                    Text(
-                        text = track.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        color = SpotifyGreen,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Track #${track.track_number}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = formatDuration(track.duration_ms),
-                        style = MaterialTheme.typography.bodyMedium
+                    Icon(
+                        painter = painterResource(id = R.drawable.minus),
+                        contentDescription = "Remove track from favorites",
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
-        } else {
-            // PORTRAIT: natural height using aspect ratio for image
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1.4f) // keeps 70/30 visual split
-                ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(track.albumImage),
-                        contentDescription = track.name,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
 
-                    SmallFloatingActionButton(
-                        onClick = {
-                            onEditFavorite(track)
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(4.dp), // slightly smaller padding
-                        containerColor = SpotifyGreen,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shape = CircleShape
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.gear),
-                            contentDescription = "Edit favorite track",
-                            modifier = Modifier.size(16.dp) // optional: shrink icon
-                        )
-                    }
-
-                    SmallFloatingActionButton(
-                        onClick = {
-                            onRemoveFavorite(track.id)
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(4.dp), // slightly smaller padding
-                        containerColor = SpotifyGreen,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shape = CircleShape
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.minus),
-                            contentDescription = "Add track to favorites",
-                            modifier = Modifier.size(16.dp) // optional: shrink icon
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = track.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        color = SpotifyGreen,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Track #${track.track_number}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = formatDuration(track.duration_ms),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = track.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    color = SpotifyGreen,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Track #${track.track_number}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = formatDuration(track.duration_ms),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
