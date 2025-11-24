@@ -1,6 +1,5 @@
 package com.example.spotifyexplorer.data.ui.favoriteTracks
 
-import com.example.spotifyexplorer.R.drawable
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -22,11 +21,35 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -40,15 +63,10 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.R
 import com.example.spotifyexplorer.data.db.FavoriteTrackRepository
 import com.example.spotifyexplorer.data.model.FavoriteTrack
-import com.example.spotifyexplorer.data.model.Track
+import com.example.spotifyexplorer.data.ui.album.formatDuration
 import com.example.spotifyexplorer.data.utils.showCustomToast
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import com.example.spotifyexplorer.data.ui.album.formatDuration
-import kotlinx.serialization.json.Json.Default.configuration
-import kotlinx.serialization.json.JsonConfiguration
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,6 +85,9 @@ fun FavoriteTracksScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val favorites by viewModel.favorites.collectAsState()
+
+    var editingTrack by remember { mutableStateOf<FavoriteTrack?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -144,15 +165,36 @@ fun FavoriteTracksScreen(
                             track = track,
                             onRemoveFavorite = {
                                 viewModel.removeFavorite(track.id)
-
                                 showCustomToast(
                                     context = context,
                                     message = "Track removed from favorites!",
                                     iconRes = R.drawable.check
                                 )
-                            }
+                            },
+                            onEditFavorite = { editingTrack = it}
                         )
                     }
+                }
+            }
+
+            if (editingTrack != null) {
+                ModalBottomSheet(
+                    sheetState = sheetState,
+                    onDismissRequest = { editingTrack = null }
+                ) {
+                    EditFavoriteTrackSheet(
+                        track = editingTrack!!,
+                        onSave = { updatedTrack ->
+                            viewModel.updateFavorite(updatedTrack)
+                            editingTrack = null
+                            showCustomToast(
+                                context = context,
+                                message = "Track updated!",
+                                iconRes = R.drawable.check
+                            )
+                        },
+                        onCancel = { editingTrack = null }
+                    )
                 }
             }
         }
@@ -162,7 +204,8 @@ fun FavoriteTracksScreen(
 @Composable
 fun FavoriteTrackCard(
     track: FavoriteTrack,
-    onRemoveFavorite: (String) -> Unit
+    onRemoveFavorite: (String) -> Unit,
+    onEditFavorite: (FavoriteTrack) -> Unit
 ){
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -198,6 +241,24 @@ fun FavoriteTrackCard(
 
                     SmallFloatingActionButton(
                         onClick = {
+                            onEditFavorite(track)
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(4.dp), // slightly smaller padding
+                        containerColor = SpotifyGreen,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.gear),
+                            contentDescription = "Edit favorite track",
+                            modifier = Modifier.size(16.dp) // optional: shrink icon
+                        )
+                    }
+
+                    SmallFloatingActionButton(
+                        onClick = {
                             onRemoveFavorite(track.id)
                         },
                         modifier = Modifier
@@ -213,6 +274,7 @@ fun FavoriteTrackCard(
                             modifier = Modifier.size(16.dp) // optional: shrink icon
                         )
                     }
+
                 }
 
                 Column(
@@ -256,6 +318,24 @@ fun FavoriteTrackCard(
 
                     SmallFloatingActionButton(
                         onClick = {
+                            onEditFavorite(track)
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(4.dp), // slightly smaller padding
+                        containerColor = SpotifyGreen,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.gear),
+                            contentDescription = "Edit favorite track",
+                            modifier = Modifier.size(16.dp) // optional: shrink icon
+                        )
+                    }
+
+                    SmallFloatingActionButton(
+                        onClick = {
                             onRemoveFavorite(track.id)
                         },
                         modifier = Modifier
@@ -300,13 +380,64 @@ fun FavoriteTrackCard(
     }
 }
 
+@Composable
+fun EditFavoriteTrackSheet(
+    track: FavoriteTrack,
+    onSave: (FavoriteTrack) -> Unit,
+    onCancel: () -> Unit
+) {
 
+    // Properties which can be updated
+    var name by remember { mutableStateOf(track.name) }
+    var trackNum by remember { mutableStateOf(track.track_number.toString()) }
 
-fun formatDuration(ms: Int): String {
-    val totalSeconds = ms / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format("%d:%02d", minutes, seconds)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Edit Track",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Track Name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = trackNum,
+            onValueChange = { trackNum = it },
+            label = { Text("Track Number") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Button(
+            onClick = {
+                onSave(
+                    track.copy(
+                        name = name,
+                        track_number = trackNum.toIntOrNull() ?: track.track_number
+                    )
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Update")
+        }
+
+        TextButton(
+            onClick = onCancel,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Cancel")
+        }
+    }
 }
 
 
