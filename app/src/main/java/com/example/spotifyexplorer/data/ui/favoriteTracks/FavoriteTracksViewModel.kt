@@ -20,4 +20,10 @@ class FavoriteTracksViewModel(
             repository.removeTrack(trackId)
         }
     }
+
+    fun updateFavorite(track: FavoriteTrack){
+        viewModelScope.launch {
+            repository.updateTrack(track)
+        }
+    }
 }

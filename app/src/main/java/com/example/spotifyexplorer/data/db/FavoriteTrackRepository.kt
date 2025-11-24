@@ -11,11 +11,11 @@ class FavoriteTrackRepository(private val dao: FavoriteTrackDao) {
         // true = added, false = already existed
     }
 
-    suspend fun removeTrack(trackId: String) {
-        dao.deleteById(trackId)
+    suspend fun updateTrack(track: FavoriteTrack) {
+        dao.update(track)
     }
 
-    suspend fun isFavorite(trackId: String): Boolean {
-        return dao.isFavorite(trackId)
+    suspend fun removeTrack(trackId: String) {
+        dao.deleteById(trackId)
     }
 }
