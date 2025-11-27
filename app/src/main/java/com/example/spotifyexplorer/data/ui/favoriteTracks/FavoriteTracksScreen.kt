@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -58,13 +56,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.R
-import com.example.spotifyexplorer.data.db.FavoriteTrackRepository
 import com.example.spotifyexplorer.data.model.FavoriteTrack
 import com.example.spotifyexplorer.data.ui.album.formatDuration
 import com.example.spotifyexplorer.data.utils.showCustomToast
@@ -77,11 +72,8 @@ import kotlinx.coroutines.launch
 fun FavoriteTracksScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    repository: FavoriteTrackRepository
+    viewModel: FavoriteTracksViewModel
 ) {
-    val viewModel: FavoriteTracksViewModel = viewModel(
-        factory = FavoriteTracksViewModelFactory(repository)
-    )
 
     val context = LocalContext.current
 

@@ -14,6 +14,7 @@ class AlbumDetailViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AlbumDetailViewModel::class.java)) {
             val db = AppDatabase.getInstance(context)
+            // factory handles creating the FavoriteTrackRepository, which is then passed into the AlbumViewModel
             val repository = FavoriteTrackRepository(db.favoriteTrackDao())
 
             @Suppress("UNCHECKED_CAST")

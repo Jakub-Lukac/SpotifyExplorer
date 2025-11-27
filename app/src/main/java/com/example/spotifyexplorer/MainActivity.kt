@@ -32,6 +32,8 @@ class MainActivity : ComponentActivity() {
                 // wraps the entire UI in a custom theme defined in Theme.kt
 
                 // navigation controller for Jetpack Compose
+                // rememberNavController creates a new instance of the NavController
+                // and remembers it across configuration changes
                 val navController = rememberNavController()
                 SpotifyNavGraph(navController = navController)
             }
