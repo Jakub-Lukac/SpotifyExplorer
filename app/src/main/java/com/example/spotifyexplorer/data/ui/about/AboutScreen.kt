@@ -170,7 +170,7 @@ fun AboutContent() {
         Spacer(modifier = Modifier.height(40.dp))
 
         if (isLandscape) {
-            // --- Landscape/tablet: two columns ---
+            // Landscape: two columns
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -201,7 +201,7 @@ fun AboutContent() {
             }
 
         } else {
-            // --- Portrait: stacked vertically ---
+            // Portrait: stacked vertically
             AboutCard(
                 title = "Technologies Used",
                 items = listOf(
