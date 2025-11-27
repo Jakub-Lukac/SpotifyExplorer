@@ -12,9 +12,15 @@ class FavoriteTracksViewModel(
     private val repository: FavoriteTrackRepository
 ) : ViewModel() {
 
+    // FavoriteTrackRepository gets initiated inside the FavoriteTracksViewModelFactory
+
+    // Get all the favorite tracks from the repository
     val favorites = repository.getFavorites()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
+    /**
+     * ViewModelScope is used inside viewModels to launch coroutines
+     */
     fun removeFavorite(trackId: String) {
         viewModelScope.launch {
             repository.removeTrack(trackId)

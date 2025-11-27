@@ -81,6 +81,8 @@ fun FavoriteTracksScreen(
     val scope = rememberCoroutineScope()
     val favorites by viewModel.favorites.collectAsState()
 
+    // State for the bottom sheet
+    // Used to edit the favorite track
     var editingTrack by remember { mutableStateOf<FavoriteTrack?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -138,7 +140,7 @@ fun FavoriteTracksScreen(
 
             if (favorites.isEmpty()) {
                 Box(
-                    modifier = Modifier
+                    modifier = modifier
                         .fillMaxSize()
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center
@@ -156,7 +158,7 @@ fun FavoriteTracksScreen(
                     // Landscape: Two columns
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
-                        modifier = Modifier
+                        modifier = modifier
                             .fillMaxSize()
                             .padding(innerPadding)
                             .padding(horizontal = 12.dp, vertical = 12.dp),
@@ -181,7 +183,7 @@ fun FavoriteTracksScreen(
                 } else {
                     // Portrait: Single column
                     LazyColumn(
-                        modifier = Modifier
+                        modifier = modifier
                             .fillMaxSize()
                             .padding(innerPadding)
                             .padding(horizontal = 12.dp, vertical = 12.dp),
