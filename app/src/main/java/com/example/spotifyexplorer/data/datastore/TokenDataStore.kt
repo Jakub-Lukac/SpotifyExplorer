@@ -9,6 +9,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+// Save preferences locally with DataStore code lab
+// Preferences DataStore stores key-value pairs
 
 // Creates DataStore instance using preferencesDataStore
 // As the documentation specifies it should be a top-level property
@@ -45,14 +47,14 @@ class TokenDataStore(private val context: Context) {
      * Retrieves the access token from DataStore.
      * Returns a Flow of String?
      * Using Flow (state management) allows us to listen for changes in the data
-     * map { it (key) } to return the value of the key
-     * it - represents the preferences object
+     * Flow of Preferences object in this case Flow of String?
      */
     val accessToken: Flow<String?>
-        get() = context.dataStore.data.map { it[ACCESS_TOKEN] }
+        get() = context.dataStore.data.map { preferences -> preferences[ACCESS_TOKEN] }
+
 
     val expirationTime: Flow<Long?>
-        get() = context.dataStore.data.map { it[EXPIRATION] }
+        get() = context.dataStore.data.map { preferences -> preferences[EXPIRATION] }
 
     suspend fun clearToken() {
         context.dataStore.edit { prefs ->
