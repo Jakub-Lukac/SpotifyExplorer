@@ -4,6 +4,10 @@ import androidx.room.*
 import com.example.spotifyexplorer.data.model.FavoriteTrack
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * DAOs - Data Access Objects
+ * Provide methods for accessing the database
+ */
 @Dao
 interface FavoriteTrackDao {
 

@@ -2,6 +2,11 @@ package com.example.spotifyexplorer.data.db
 
 import com.example.spotifyexplorer.data.model.FavoriteTrack
 
+/**
+ * Repository for the favorite tracks
+ * Allows to access the data from the DAO
+ */
+
 class FavoriteTrackRepository(private val dao: FavoriteTrackDao) {
 
     fun getFavorites() = dao.getAllFavoriteTracks()
