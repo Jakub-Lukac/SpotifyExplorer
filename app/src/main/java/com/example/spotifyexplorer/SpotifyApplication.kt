@@ -9,6 +9,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SpotifyApplication : Application() {
+    // :Application creates a singleton, that exists for lifetime of the app
+    // It is instantiated only once
+    // Registering this class in the AndroidManifest.xml file (android:name=".SpotifyApplication")
+    // will result in, Android launching it before any activity
+    // so the scheduler can be set beforehand
     override fun onCreate() {
         super.onCreate()
 
