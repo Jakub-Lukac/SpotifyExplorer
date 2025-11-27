@@ -34,10 +34,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs += listOf(
-            "-opt-in=kotlinx.serialization.InternalSerializationApi",
-            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
-        )
     }
     buildFeatures {
         compose = true
@@ -99,4 +95,13 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     testImplementation(kotlin("test"))
     androidTestImplementation("io.mockk:mockk-android:1.13.8")
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.0")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.6.0")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.6.0")
+    }
 }

@@ -16,27 +16,34 @@ import com.example.spotifyexplorer.data.model.TrackResponse
 import kotlinx.coroutines.flow.firstOrNull
 
 class SpotifyService(
+    // Accepts client id and secret as strings
+    // And also tokenStore to be able to store and retrieve tokens
     private val clientId: String,
     private val clientSecret: String,
     private val tokenStore: TokenDataStore
 ) {
-    private val authBaseUrl = "https://accounts.spotify.com/"
-    private val apiBaseUrl = "https://api.spotify.com/v1/"
+    private val authBaseUrl = "https://accounts.spotify.com/" // Used only to request access tokens
+    private val apiBaseUrl = "https://api.spotify.com/v1/" // Used for actual API data requests
+    private var accessToken: String? = null // var - mutable, we can change the value
+    private var tokenExpiration: Long = 0L // Used to check if token is still valid
+    private val mutex = Mutex() // Prevents multiple requests refreshing token at once
+    private val json = Json { ignoreUnknownKeys = true } // Allows parsing JSON even if extra fields exist
 
-    private var accessToken: String? = null
-    private var tokenExpiration: Long = 0L
-    private val mutex = Mutex()
-
-    private val json = Json { ignoreUnknownKeys = true }
-
+    /**
+     * Retrofit service used ONLY for authentication (passing the authBaseUrl).
+     */
     private val authApi: SpotifyAuthService by lazy {
         Retrofit.Builder()
-            .baseUrl(authBaseUrl)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
-            .create(SpotifyAuthService::class.java)
+            .baseUrl(authBaseUrl) // Only used for authentication
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType())) // tells Retrofit how to convert JSON
+            .build() // creates Retrofit instance
+            .create(SpotifyAuthService::class.java) // creates SpotifyAuthService instance
     }
 
+    /**
+     * Retrofit API client for data requests — searching artists, getting albums/tracks.
+     * Kept separate from auth because it needs the token injected in each call.
+     */
     private val api: SpotifyApi by lazy {
         Retrofit.Builder()
             .baseUrl(apiBaseUrl)
@@ -46,7 +53,18 @@ class SpotifyService(
             .create(SpotifyApi::class.java)
     }
 
-    // Ensure valid token
+    /**
+     * Returns a valid Spotify API access token
+     * Mutex - prevents race conditions (multiple requests refreshing token at once)
+     *
+     * Flow of function:
+     * Check if the token stored in DataStore is still valid
+     * If it is expired or missing, then request new one
+     * Save new token and exp time in DataStore
+     * Return token
+     */
+
+    // suspend function to make it asynchronous and not block the calling thread
     suspend fun getValidAccessToken(): String = mutex.withLock {
         val now = System.currentTimeMillis()
 
@@ -63,13 +81,17 @@ class SpotifyService(
         } else {
             // Fetch a new token
             Log.d("Access Token", "Fetching new token")
-            val credentials = "$clientId:$clientSecret"
-            val basicAuth = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
-            val response = authApi.getAccessToken("Basic $basicAuth")
+            val response = authApi.getAccessToken(
+                clientId = clientId,
+                clientSecret = clientSecret
+            )
             if (response.isSuccessful) {
                 val tokenResponse = response.body()!!
                 accessToken = tokenResponse.access_token
                 tokenExpiration = now + tokenResponse.expires_in * 1000
+                if (accessToken == null) {
+                    throw Exception("Invalid access token")
+                }
                 tokenStore.saveToken(accessToken!!, tokenExpiration)
                 Log.d("Access Token", "New token saved")
             } else {
@@ -77,10 +99,10 @@ class SpotifyService(
             }
         }
 
-        return accessToken!!
+        return accessToken ?: throw Exception("Invalid access token")
     }
 
-    // --- API methods ---
+    // API METHODS
 
     suspend fun searchArtist(artistName: String): Artist? {
         Log.d("Search artist", "Searching for artist")
@@ -98,6 +120,7 @@ class SpotifyService(
         val token = getValidAccessToken()
         val response = api.getArtistAlbums("Bearer $token", artistId)
         if (response.isSuccessful) {
+            // The type of response comes from both the interface return type and the converter factory.
             return response.body()
         } else {
             throw Exception("Failed to fetch albums: ${response.errorBody()?.string()}")
@@ -113,5 +136,4 @@ class SpotifyService(
             throw Exception("Failed to fetch tracks: ${response.errorBody()?.string()}")
         }
     }
-
 }

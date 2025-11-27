@@ -9,11 +9,16 @@ import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+// Based on the "Get data from the internet" section in android course
+
 /**
- * Spotify API interface for data retrieval (artists, albums, tracks, etc.)
+ * Spotify API interface for data retrieval (artists, albums, tracks)
  * It uses retrofit annotations to declare HTTP requests and their parameters
  */
 interface SpotifyApi {
+    /**
+     * Search for an artist by name.
+     * */
     @GET("search") // defines path /search + HTTP method -> GET
     // By calling this method from the SpotifyApi instance in SpotifyService.kt with baseUrl
     // Retrofit does the work behind the scenes and constructs the final url
