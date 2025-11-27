@@ -2,6 +2,9 @@ package com.example.spotifyexplorer.data.model
 
 import kotlinx.serialization.Serializable
 
+/*
+ * Matches Album response for album endpoint of Spotify API
+ */
 @Serializable
 data class AlbumResponse(
     val total: Int,
