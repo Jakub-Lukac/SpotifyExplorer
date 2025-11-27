@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.spotifyexplorer.data.ui.home.HomeViewModel
 import com.example.spotifyexplorer.data.datastore.TokenDataStore
 
+/**
+ * Purpose of the factory is to create ViewModel with parameter(s)
+ */
 
 class HomeViewModelFactory(
     private val tokenStore: TokenDataStore

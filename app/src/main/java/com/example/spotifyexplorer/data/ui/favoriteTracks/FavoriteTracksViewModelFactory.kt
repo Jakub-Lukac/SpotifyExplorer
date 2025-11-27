@@ -4,6 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.spotifyexplorer.data.db.FavoriteTrackRepository
 
+/**
+ * Purpose of the factory is to create ViewModel with parameter(s)
+ */
+
 class FavoriteTracksViewModelFactory(
     private val repository: FavoriteTrackRepository
 ) : ViewModelProvider.Factory {
