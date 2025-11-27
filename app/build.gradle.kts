@@ -64,6 +64,7 @@ dependencies {
 
 // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.3")
+    implementation(libs.androidx.ui.test.junit4)
 
 // Room
     val room_version = rootProject.extra["room_version"]
@@ -97,5 +98,5 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     testImplementation(kotlin("test"))
-
+    androidTestImplementation("io.mockk:mockk-android:1.13.8")
 }
