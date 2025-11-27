@@ -33,4 +33,4 @@ data class Artist(
 @Serializable
 data class Followers(val total: Int)
 @Serializable
-data class Image(val url: String, val height: Int?, val width: Int?)
+data class Image(val url: String?, val height: Int?, val width: Int?)

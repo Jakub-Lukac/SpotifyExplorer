@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
                 // rememberNavController creates a new instance of the NavController
                 // and remembers it across configuration changes
                 val navController = rememberNavController()
-                SpotifyNavGraph(navController = navController)
+                SpotifyNavGraph(navController = navController, modifier = Modifier)
             }
         }
     }

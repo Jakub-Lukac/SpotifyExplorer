@@ -14,12 +14,14 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val tokenStore: TokenDataStore
 ) : ViewModel() {
-
     private val clientId = "03619e7aa0344a45a9fe014a969a62ea"
     private val clientSecret = "6c994bd714a94ee79d8f6c985716c3a9"
     private val spotifyService = SpotifyService(clientId, clientSecret, tokenStore)
 
+    // private mutable state flow that stored the current state of the Home screen, with initial state of Idle
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
+
+    // exposes state as read-only (val)
     val uiState: StateFlow<HomeUiState> = _uiState
 
     private val _selectedAlbum = MutableStateFlow<Album?>(null)

@@ -38,20 +38,24 @@ import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // telling compiler that I know it is experimental version so it wont throw errors
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     viewModel: HomeViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    var query by rememberSaveable { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
-    val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val uiState by viewModel.uiState.collectAsState() // accessing the public read-only value
+    var query by rememberSaveable { mutableStateOf("") } // state to hold the search query
 
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    // coroutine means a thread which can run asynchronously without blocking main thread
+    // used for network calls, db operations and animations
+    val scope = rememberCoroutineScope() // remember the coroutine scope
+
+    val configuration = LocalConfiguration.current // access current device configuration
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE // check if in landscape mode
+
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // remember drawer state
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -64,8 +68,9 @@ fun HomeScreen(
                 )
                 NavigationDrawerItem(
                     label = { Text("Home") },
-                    selected = true,
+                    selected = true, // highlights selected option
                     onClick = {
+                        // calling coroutine scope to close drawer -> animation
                         scope.launch { drawerState.close() }
                     },
                     icon = { Icon(Icons.Default.Home, contentDescription = null) }
@@ -75,6 +80,9 @@ fun HomeScreen(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
+
+                        // navController passed from MainActivity to SpotifyNavGraph to NavHost
+                        // and then to this screen and used here to navigate to favoriteTracks screen
                         navController.navigate("favoriteTracks")
                     },
                     icon = { Icon(Icons.Default.Favorite, contentDescription = null) }
@@ -104,21 +112,24 @@ fun HomeScreen(
             }
         ) { innerPadding ->
             Column(
+                // uses modifier passed from parent composable
                 modifier = modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp),
+                    .fillMaxSize() // makes the composable expand to match the parent's width and height
+                    .padding(innerPadding) // adds padding coming from scaffold
+                    // without the first padding, the search bar would be "underneath" the navbar
+                    .padding(16.dp), // adds extra 16dp padding on all sides
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 OutlinedTextField(
                     value = query,
-                    onValueChange = { query = it },
+                    onValueChange = { query = it }, // updates the query state
                     label = { Text("Search artist") },
                     modifier = Modifier.fillMaxWidth(),
                     trailingIcon = {
                         IconButton(
                             onClick = {
                                 if (query.isNotBlank()) {
+                                    // only perform search if query is not blank
                                     scope.launch { viewModel.searchArtist(query) }
                                 }
                             }
@@ -134,16 +145,19 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Handle different states of the UI
                 when (val state = uiState) {
                     is HomeUiState.Idle -> Text("Search for an artist to begin")
                     is HomeUiState.Loading -> CircularProgressIndicator()
                     is HomeUiState.Success -> {
                         if (isLandscape) {
-                            // 🖥 Landscape layout: side-by-side
+                            // Landscape layout: multiple columns
                             Row(
                                 modifier = Modifier.fillMaxSize(),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
+                                // Using weight
+                                // both take 1f so they will take 50% screen each
                                 Box(modifier = Modifier.weight(1f)) {
                                     ArtistDetailsCard(state.artist, navController)
                                 }
@@ -196,8 +210,8 @@ fun ArtistDetailsCard(
             .clickable {
                 // Navigate to artist detail screen with artist ID
                 navController.navigate("artist_detail/$currentArtistId") {
-                    launchSingleTop = true
-                    restoreState = true
+                    launchSingleTop = true // prevents multiple instances of the same screen
+                    restoreState = true // restores the state of the screen
                 }
             }
             .padding(20.dp)
@@ -211,15 +225,11 @@ fun ArtistDetailsCard(
 fun ArtistDetailsContent(artist: Artist) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
-    val screenWidth = configuration.screenWidthDp
 
-    val imageUrl = when {
-        screenWidth >= 768 && artist.images.isNotEmpty() -> artist.images[0].url
-        artist.images.size > 1 -> artist.images[1].url
-        artist.images.isNotEmpty() -> artist.images[0].url
-        else -> null
-    }
+    val imageUrl = artist.images[0].url
 
+    // In this case we are also using landscape inside the composable detail content
+    // because the layout changes depending on the viewport
     if (isLandscape) {
         // Landscape: image + info side by side
         Row(
@@ -442,3 +452,15 @@ fun AlbumCard(
         }
     }
 }
+
+/**
+ * Using column vs lazy column
+ * Column displays all items at once
+ * not very memory-efficient for long lists
+ * does not support scrolling by default
+ *
+ * Lazy column designed for larger lists
+ * scroll by default
+ * only items visibile on screen are composes
+ * memory-efficient
+ */
