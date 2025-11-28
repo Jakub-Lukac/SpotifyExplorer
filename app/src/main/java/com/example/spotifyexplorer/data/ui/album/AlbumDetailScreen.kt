@@ -68,6 +68,7 @@ import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumDetailScreen(
+    modifier: Modifier = Modifier,
     album: Album,
     navController: NavController,
     viewModel: AlbumDetailViewModel = viewModel()
@@ -75,8 +76,9 @@ fun AlbumDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    // Load tracks for album when the screen is displayed
     LaunchedEffect(album.id) {
-        viewModel.loadAlbumTracks(album)
+        viewModel.loadAlbumTracks(album) // the result is stored inside the viewModel of AlbumDetailViewModel
     }
 
     Scaffold(
@@ -110,7 +112,7 @@ fun AlbumDetailScreen(
         val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(24.dp),
@@ -123,15 +125,17 @@ fun AlbumDetailScreen(
                     val imageUrl = album.images.firstOrNull()?.url
 
                     if (isLandscape) {
-                        // 🖥 Landscape layout: side-by-side
+                        // Landscape layout
                         Row(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = modifier.fillMaxSize(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Box(modifier = Modifier.weight(1f)) {
+                            // Boxes uses weight, both have equal weight (1 fraction)
+                            // So they will both take 50% of available space
+                            Box(modifier = modifier.weight(1f)) {
                                 AlbumDetailsCard(album)
                             }
-                            Box(modifier = Modifier.weight(1f)) {
+                            Box(modifier = modifier.weight(1f)) {
                                 TrackList(
                                     tracks = state.tracks,
                                     imageUrl = imageUrl,
@@ -166,7 +170,7 @@ fun AlbumDetailScreen(
                     } else {
                         // Portrait layout: stacked vertically
                         AlbumDetailsCard(album)
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = modifier.height(8.dp))
                         TrackList(tracks = state.tracks, imageUrl = imageUrl,
                             onAddFavorite = { track ->
                                 val favorite = FavoriteTrack(
@@ -222,14 +226,8 @@ fun AlbumDetailsCard(
 fun AlbumDetailsContent(album: Album) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val screenWidth = configuration.screenWidthDp
 
-    val imageUrl = when {
-        screenWidth >= 768 && album.images.isNotEmpty() -> album.images[0].url
-        album.images.size > 1 -> album.images[1].url
-        album.images.isNotEmpty() -> album.images[0].url
-        else -> null
-    }
+    val imageUrl = album.images[0].url
 
     if (isLandscape) {
         // Landscape: image + info side by side

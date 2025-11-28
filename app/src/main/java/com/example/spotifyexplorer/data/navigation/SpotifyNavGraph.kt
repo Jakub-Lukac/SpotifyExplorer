@@ -124,12 +124,21 @@ fun SpotifyNavGraph(
 
             val context = LocalContext.current
 
-            val albumDetailViewModel: AlbumDetailViewModel = viewModel(backStackEntry, factory = AlbumDetailViewModelFactory(context, tokenStore))
+            val albumDetailViewModel: AlbumDetailViewModel = viewModel(
+                backStackEntry,
+                factory = AlbumDetailViewModelFactory(
+                    tokenStore,
+                    repository = FavoriteTrackRepository(
+                        AppDatabase.getInstance(context).favoriteTrackDao()
+                    )
+                )
+            )
 
             val selectedAlbum by homeViewModel.selectedAlbum.collectAsState()
 
             if (selectedAlbum != null) {
                 AlbumDetailScreen(
+                    modifier = modifier,
                     album = selectedAlbum!!,
                     navController = navController,
                     viewModel = albumDetailViewModel

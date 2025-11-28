@@ -8,15 +8,11 @@ import com.example.spotifyexplorer.data.db.AppDatabase
 import com.example.spotifyexplorer.data.db.FavoriteTrackRepository
 
 class AlbumDetailViewModelFactory(
-    private val context: Context,
-    private val tokenStore: TokenDataStore
+    private val tokenStore: TokenDataStore,
+    private val repository: FavoriteTrackRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AlbumDetailViewModel::class.java)) {
-            val db = AppDatabase.getInstance(context)
-            // factory handles creating the FavoriteTrackRepository, which is then passed into the AlbumViewModel
-            val repository = FavoriteTrackRepository(db.favoriteTrackDao())
-
             @Suppress("UNCHECKED_CAST")
             return AlbumDetailViewModel(tokenStore, repository) as T
         }
