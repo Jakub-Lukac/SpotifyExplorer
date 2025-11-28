@@ -12,3 +12,10 @@ And makes use of Room database for storing favorite tracks.
  - Retrofit – API communication
  - Room – Database for favorite tracks
  - Navigation Component – Screen routing
+
+ ## Project features
+  - Search and browse artists
+  - View albums and tracks
+  - Save favorite tracks locally
+  - Clean modular structure
+  - Responsive material design
