@@ -22,20 +22,30 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
+    // lateinit allows for variable initialization later
+    // Mock instance of HomeViewModel
     private lateinit var viewModel: HomeViewModel
+
+    // Mock instance of TokenDataStore and SpotifyService
     private lateinit var mockTokenStore: TokenDataStore
     private lateinit var mockSpotifyService: SpotifyService
+
+    // Mock dispatcher for coroutines
     private val testDispatcher = StandardTestDispatcher()
 
-    @Before
+    @Before // runs before every test
     fun setup() {
+        // Replaces main dispatcher so coroutines can run in tests
         Dispatchers.setMain(testDispatcher)
-        mockTokenStore = mockk(relaxed = true)
+        mockTokenStore = mockk(relaxed = true) // initialize the mock token store with relaxed = true
         
         // Mock SpotifyService constructor
-        mockkConstructor(SpotifyService::class)
-        mockSpotifyService = mockk(relaxed = true)
+        // It tells mocked view model of homeviewmodel, that it should use the mocked spotify service
+        mockkConstructor(SpotifyService::class) // Specifies for Mockk that the SpotifyService will be mocked
+        mockSpotifyService = mockk(relaxed = true) // initialize the mock spotify service with relaxed = true
+        // relaxed to true, means it will create mock with no specific behaviour
 
+        // Defines default behaviour, to return null
         coEvery {
             anyConstructed<SpotifyService>().searchArtist(any())
         } coAnswers { null } // default, override in tests
@@ -43,11 +53,13 @@ class HomeViewModelTest {
         coEvery {
             anyConstructed<SpotifyService>().getArtistAlbums(any())
         } coAnswers { null }
-        
+
+        // Create the mocked instance of HomeViewModel with mocked dependencies
         viewModel = HomeViewModel(mockTokenStore)
     }
 
-    @After
+    @After // clean up, runs after every test
+    // resets dispatcher and all mocks after each test
     fun tearDown() {
         Dispatchers.resetMain()
         unmockkAll()
@@ -84,6 +96,8 @@ class HomeViewModelTest {
         coEvery { anyConstructed<SpotifyService>().searchArtist(query) } returns mockArtist
         coEvery { anyConstructed<SpotifyService>().getArtistAlbums(mockArtist.id) } returns mockAlbumResponse
 
+        // Test the UI state using Turbine
+        // Turbine is testing library for collecting and asserting values emitted from Kotlin Flows
         viewModel.uiState.test {
             assertEquals(HomeUiState.Idle, awaitItem())
 
