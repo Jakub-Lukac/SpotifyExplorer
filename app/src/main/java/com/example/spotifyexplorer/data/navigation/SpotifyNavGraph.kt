@@ -99,6 +99,7 @@ fun SpotifyNavGraph(
 
             if (artist != null) {
                 ArtistDetailScreen(
+                    modifier = modifier,
                     artist = artist,
                     navController = navController
                 )

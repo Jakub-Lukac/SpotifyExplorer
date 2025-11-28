@@ -27,6 +27,7 @@ import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArtistDetailScreen(
+    modifier: Modifier = Modifier,
     navController: NavController,
     artist: Artist
 ) {
@@ -65,7 +66,7 @@ fun ArtistDetailScreen(
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .background(SpotifyDarkGray)
                 .padding(innerPadding)
