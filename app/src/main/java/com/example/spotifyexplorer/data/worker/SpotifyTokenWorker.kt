@@ -7,6 +7,12 @@ import androidx.work.WorkerParameters
 import com.example.spotifyexplorer.data.api.SpotifyService
 import com.example.spotifyexplorer.data.datastore.TokenDataStore
 
+/**
+ * Worker to refresh Spotify token
+ * Accepts clientId and clientSecret as input data
+ * Uses TokenDataStore to save the token
+ */
+
 class SpotifyTokenWorker(
     context: Context,
     params: WorkerParameters
@@ -14,6 +20,7 @@ class SpotifyTokenWorker(
 
     private val tokenStore = TokenDataStore(context)
 
+    // suspend function to run async tasks in background
     override suspend fun doWork(): Result {
         return try {
             val clientId = inputData.getString("CLIENT_ID") ?: return Result.failure()
