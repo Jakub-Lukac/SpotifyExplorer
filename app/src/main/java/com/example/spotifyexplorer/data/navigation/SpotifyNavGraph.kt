@@ -92,6 +92,7 @@ fun SpotifyNavGraph(
             }
             val homeViewModel: HomeViewModel = viewModel(homeEntry, factory = HomeViewModelFactory(tokenStore))
 
+
             val uiState = homeViewModel.uiState.collectAsState().value
             Log.d("State", "$uiState")
             val artist = (uiState as? HomeUiState.Success)?.artist
@@ -101,7 +102,8 @@ fun SpotifyNavGraph(
                 ArtistDetailScreen(
                     modifier = modifier,
                     artist = artist,
-                    navController = navController
+                    navController = navController,
+                    homeViewModel = homeViewModel
                 )
             } else {
                 Box(

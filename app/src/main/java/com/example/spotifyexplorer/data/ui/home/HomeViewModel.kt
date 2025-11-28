@@ -1,5 +1,6 @@
 package com.example.spotifyexplorer.data.ui.home
 
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.spotifyexplorer.data.api.SpotifyService
@@ -29,6 +30,18 @@ class HomeViewModel(
 
     fun selectAlbum(album: Album) {
         _selectedAlbum.value = album
+    }
+
+    // For artist photo
+    private val _customArtistPhotos = mutableStateMapOf<String, String>()
+    val customArtistPhotos: Map<String, String> get() = _customArtistPhotos
+
+    fun setCustomArtistPhoto(artistId: String, path: String) {
+        _customArtistPhotos[artistId] = path
+    }
+
+    fun getCustomArtistPhoto(artistId: String): String? {
+        return _customArtistPhotos[artistId]
     }
 
     fun searchArtist(query: String) {

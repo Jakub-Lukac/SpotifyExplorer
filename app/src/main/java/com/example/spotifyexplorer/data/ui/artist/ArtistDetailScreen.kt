@@ -26,10 +26,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.spotifyexplorer.R
 import com.example.spotifyexplorer.data.model.Artist
+import com.example.spotifyexplorer.data.ui.home.HomeViewModel
 import com.example.spotifyexplorer.ui.theme.SpotifyDarkGray
 import com.example.spotifyexplorer.ui.theme.SpotifyGreen
 import java.io.File
@@ -40,12 +42,13 @@ import java.io.FileOutputStream
 fun ArtistDetailScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    artist: Artist
+    artist: Artist,
+    homeViewModel: HomeViewModel
 ) {
     val context = LocalContext.current
 
-    // State to hold a custom photo path if user takes a photo
-    var customPhotoUri by remember { mutableStateOf<String?>(null) }
+    // Get custom photo for this artist from HomeViewModel
+    var customPhotoUri by remember { mutableStateOf(homeViewModel.getCustomArtistPhoto(artist.id)) }
 
     // Check camera permission
     var hasCameraPermission by remember {
@@ -65,7 +68,11 @@ fun ArtistDetailScreen(
         contract = ActivityResultContracts.TakePicturePreview(),
         onResult = { bitmap ->
             bitmap?.let {
-                customPhotoUri = saveBitmapToCache(context, it)
+                bitmap.let {
+                    val path = saveBitmapToCache(context, it)
+                    customPhotoUri = path
+                    homeViewModel.setCustomArtistPhoto(artist.id, path)
+                }
             }
         }
     )
