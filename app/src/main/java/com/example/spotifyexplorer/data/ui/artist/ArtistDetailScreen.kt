@@ -3,7 +3,9 @@ package com.example.spotifyexplorer.data.ui.artist
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
@@ -19,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,33 +49,32 @@ fun ArtistDetailScreen(
     homeViewModel: HomeViewModel
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     // Get custom photo for this artist from HomeViewModel
     var customPhotoUri by remember { mutableStateOf(homeViewModel.getCustomArtistPhoto(artist.id)) }
 
-    // Check camera permission
+    // Camera permission check
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         )
     }
 
-    // Launcher to request camera permission
+    // Permission and camera launchers
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted -> hasCameraPermission = granted }
     )
 
-    // Launcher to take a picture
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview(),
         onResult = { bitmap ->
             bitmap?.let {
-                bitmap.let {
-                    val path = saveBitmapToCache(context, it)
-                    customPhotoUri = path
-                    homeViewModel.setCustomArtistPhoto(artist.id, path)
-                }
+                val path = saveBitmapToCache(context, it)
+                customPhotoUri = path
+                homeViewModel.setCustomArtistPhoto(artist.id, path)
             }
         }
     )
@@ -93,71 +95,108 @@ fun ArtistDetailScreen(
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .background(SpotifyDarkGray)
-                .padding(innerPadding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
-            // Use custom photo if exists, otherwise API image
-            val imageUrl = customPhotoUri ?: artist.images.firstOrNull()?.url
 
-            Box {
-                Image(
-                    painter = if (imageUrl != null) rememberAsyncImagePainter(imageUrl)
-                    else painterResource(id = R.drawable.noimage),
-                    contentDescription = artist.name,
-                    modifier = Modifier
-                        .size(240.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
+        // Layout changes based on orientation
+        if (isLandscape) {
+            Row(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(SpotifyDarkGray)
+                    .padding(innerPadding)
+                    .padding(24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                ArtistImage(
+                    imageUrl = customPhotoUri ?: artist.images.firstOrNull()?.url,
+                    hasCameraPermission = hasCameraPermission,
+                    cameraLauncher = cameraLauncher,
+                    permissionLauncher = permissionLauncher
                 )
-
-                // Camera icon overlay
-                IconButton(
-                    onClick = {
-                        if (hasCameraPermission) {
-                            cameraLauncher.launch()
-                        } else {
-                            permissionLauncher.launch(Manifest.permission.CAMERA)
-                        }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(8.dp, 8.dp)
-                        .size(40.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.camera),
-                        contentDescription = "Change Artist Image",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
+                ArtistData(artist)
             }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            Text(
-                text = artist.name,
-                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 32.sp, fontWeight = FontWeight.Bold),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
-                DetailRow(label = "Followers:", value = "${artist.followers.total}")
-                DetailRow(label = "Popularity:", value = "${artist.popularity} / 100")
-                DetailRow(label = "Genres:", value = artist.genres.joinToString(", ").ifEmpty { "Unknown" })
+        } else {
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(SpotifyDarkGray)
+                    .padding(innerPadding)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                ArtistImage(
+                    imageUrl = customPhotoUri ?: artist.images.firstOrNull()?.url,
+                    hasCameraPermission = hasCameraPermission,
+                    cameraLauncher = cameraLauncher,
+                    permissionLauncher = permissionLauncher
+                )
+                Spacer(modifier = Modifier.height(28.dp))
+                ArtistData(artist)
             }
         }
     }
 }
+
+@Composable
+private fun ArtistImage(
+    imageUrl: String?,
+    hasCameraPermission: Boolean,
+    cameraLauncher: ManagedActivityResultLauncher<Void?, Bitmap?>,
+    permissionLauncher: ManagedActivityResultLauncher<String, Boolean>
+) {
+    Box {
+        Image(
+            painter = if (imageUrl != null) rememberAsyncImagePainter(imageUrl)
+            else painterResource(id = R.drawable.noimage),
+            contentDescription = null,
+            modifier = Modifier
+                .size(240.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+
+        IconButton(
+            onClick = {
+                if (hasCameraPermission) {
+                    cameraLauncher.launch()
+                } else {
+                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(8.dp, 8.dp)
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.camera),
+                contentDescription = "Change Artist Image",
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+    }
+}
+
+@Composable
+private fun ArtistData(artist: Artist) {
+    Text(
+        text = artist.name,
+        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 32.sp, fontWeight = FontWeight.Bold),
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.onBackground
+    )
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
+        DetailRow(label = "Followers:", value = "${artist.followers.total}")
+        DetailRow(label = "Popularity:", value = "${artist.popularity} / 100")
+        DetailRow(label = "Genres:", value = artist.genres.joinToString(", ").ifEmpty { "Unknown" })
+    }
+}
+
 
 @Composable
 private fun DetailRow(label: String, value: String) {
