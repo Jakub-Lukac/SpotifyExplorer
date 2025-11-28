@@ -1,6 +1,7 @@
 package com.example.spotifyexplorer.data.ui
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -19,28 +20,11 @@ import org.junit.Test
 
 class HomeScreenTest {
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createComposeRule()
 
     // Fake ViewModel for UI testing
     private val fakeViewModel = mockk<HomeViewModel>(relaxed = true)
     private val fakeState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
-
-    fun shows_idle_message_initially() {
-        every { fakeViewModel.uiState } returns MutableStateFlow(HomeUiState.Idle)
-
-        composeRule.setContent {
-            SpotifyExplorerTheme {
-                val navController =
-                    androidx.navigation.compose.rememberNavController() // ← CREATE HERE
-                HomeScreen(
-                    navController = navController,
-                    viewModel = fakeViewModel
-                )
-            }
-        }
-
-        composeRule.onNodeWithText("Search for an artist to begin").assertExists()
-    }
 
     @Test
     fun search_bar_input_triggers_searchArtist() {
@@ -49,8 +33,7 @@ class HomeScreenTest {
 
         composeRule.setContent {
             SpotifyExplorerTheme {
-                val navController =
-                    androidx.navigation.compose.rememberNavController() // ← CREATE HERE
+                val navController = androidx.navigation.compose.rememberNavController()
                 HomeScreen(
                     navController = navController,
                     viewModel = fakeViewModel

@@ -42,6 +42,12 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.4" // works with Kotlin 1.9.x
     }
+    packagingOptions {
+        resources {
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/LICENSE-notice.md"
+        }
+    }
 }
 
 dependencies {
@@ -103,5 +109,6 @@ configurations.all {
         force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.0")
         force("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.6.0")
         force("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.6.0")
+        force("androidx.test.espresso:espresso-core:3.5.1")
     }
 }
