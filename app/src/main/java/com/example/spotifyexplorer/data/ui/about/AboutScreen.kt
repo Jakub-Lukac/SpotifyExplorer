@@ -161,7 +161,8 @@ fun AboutContent() {
         Text(
             text = "This project is built using Kotlin and Jetpack Compose, " +
                     "integrating the Spotify Web API and applying MVVM architecture " +
-                    "with Navigation and StateFlow for a clean, scalable structure.",
+                    "with Navigation and StateFlow for a clean, scalable structure." +
+                    "And makes use of Room database for storing favorite tracks",
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(top = 16.dp),
             textAlign = TextAlign.Center
@@ -182,6 +183,7 @@ fun AboutContent() {
                         "Spotify Web API – Artists, albums, tracks",
                         "MVVM Architecture – ViewModel + StateFlow",
                         "Retrofit – API communication",
+                        "Room – Database for favorite tracks",
                         "Navigation Component – Screen routing"
                     ),
                     modifier = Modifier.weight(1f)
@@ -209,6 +211,7 @@ fun AboutContent() {
                     "Spotify Web API – Artists, albums, tracks",
                     "MVVM Architecture – ViewModel + StateFlow",
                     "Retrofit – API communication",
+                    "Room – Database for favorite tracks",
                     "Navigation Component – Screen routing"
                 ),
                 modifier = Modifier.fillMaxWidth()
