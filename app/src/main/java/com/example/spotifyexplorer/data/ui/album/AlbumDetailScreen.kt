@@ -183,6 +183,8 @@ fun AlbumDetailScreen(
 
                                 viewModel.addFavorite(favorite) { added ->
                                     if (added) {
+                                        // Calls custom view and passes message and icon
+                                        // The custom view is defined in the res/layout/custom_toast.xml
                                         showCustomToast(
                                             context = context,
                                             message = "Track added to favorites!",
